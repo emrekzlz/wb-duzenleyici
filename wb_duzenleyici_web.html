@@ -3,560 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wildberries Başlık Düzenleyici</title>
+    <title>WB Başlık Düzenleyici v2.0 - LC Waikiki</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-        }
-
-        h1 {
-            color: #2d3748;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #718096;
-            margin-bottom: 40px;
-            font-size: 1.1em;
-        }
-
-        .upload-area {
-            border: 3px dashed #cbd5e0;
-            border-radius: 15px;
-            padding: 60px 40px;
-            text-align: center;
-            background: #f7fafc;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #edf2f7;
-        }
-
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #e6fffa;
-        }
-
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-
-        .upload-text {
-            font-size: 1.2em;
-            color: #4a5568;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            color: #a0aec0;
-            font-size: 0.9em;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .rules-box {
-            background: #edf2f7;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 8px;
-        }
-
-        .rules-title {
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-
-        .rules-list {
-            color: #4a5568;
-            line-height: 1.8;
-            font-size: 0.95em;
-        }
-
-        .rules-list li {
-            margin-left: 20px;
-            margin-bottom: 8px;
-        }
-
-        .progress-container {
-            display: none;
-            margin: 30px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #e2e8f0;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .result-area {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
-        .download-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 40px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            cursor: pointer;
-            border: none;
-            transition: transform 0.2s ease;
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .preview-table {
-            width: 100%;
-            margin-top: 30px;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .preview-table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .preview-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .preview-table tr:hover {
-            background: #f7fafc;
-        }
-
-        .before-after {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .before {
-            color: #e53e3e;
-            font-size: 0.9em;
-        }
-
-        .after {
-            color: #38a169;
-            font-weight: 500;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-
-        .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border-left: 4px solid #38a169;
-        }
-
-        .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border-left: 4px solid #e53e3e;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #0051A5 0%, #003D7A 100%); min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: white; padding: 40px; border-radius: 20px 20px 0 0; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center; }
+        .logo-text { font-size: 3em; font-weight: 900; color: #0051A5; letter-spacing: -2px; margin-bottom: 20px; }
+        .header h1 { color: #0051A5; font-size: 2.2em; font-weight: 700; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 1.1em; margin-bottom: 20px; }
+        .version-badge { display: inline-block; background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 8px 20px; border-radius: 25px; font-size: 0.85em; font-weight: 600; }
+        .main-content { background: white; padding: 50px 40px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .upload-area { border: 3px dashed #0051A5; border-radius: 15px; padding: 80px 40px; text-align: center; background: linear-gradient(135deg, #f8f9ff, #e8f0ff); cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: #003D7A; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,81,165,0.2); }
+        .upload-area.dragover { background: linear-gradient(135deg, #e8f0ff, #d0e4ff); transform: scale(1.02); }
+        .upload-icon { font-size: 5em; margin-bottom: 20px; }
+        .upload-text { font-size: 1.4em; color: #0051A5; font-weight: 600; margin-bottom: 15px; }
+        .upload-hint { color: #666; }
+        input[type="file"] { display: none; }
+        .progress-container { display: none; margin: 40px 0; }
+        .progress-bar { width: 100%; height: 35px; background: #e8f0ff; border-radius: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #0051A5, #003D7A); width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1em; }
+        .result-area { display: none; margin-top: 40px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .stat-card { background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 35px 30px; border-radius: 15px; text-align: center; box-shadow: 0 8px 20px rgba(0,81,165,0.3); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-number { font-size: 3em; font-weight: bold; margin-bottom: 10px; }
+        .stat-label { font-size: 1em; opacity: 0.95; }
+        .download-btn { display: inline-block; background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 18px 50px; border-radius: 12px; font-weight: bold; font-size: 1.2em; cursor: pointer; border: none; transition: all 0.3s; box-shadow: 0 6px 20px rgba(0,81,165,0.3); }
+        .download-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,81,165,0.4); }
+        .preview-table { width: 100%; margin-top: 40px; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .preview-table th { background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 18px; text-align: left; font-weight: 600; }
+        .preview-table td { padding: 15px 18px; border-bottom: 1px solid #e8f0ff; }
+        .preview-table tr:hover { background: #f8f9ff; }
+        .preview-title { color: #0051A5; font-size: 1.5em; font-weight: 600; margin-top: 50px; margin-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; color: white; font-size: 0.9em; opacity: 0.9; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔄 Wildberries Başlık Düzenleyici</h1>
-        <p class="subtitle">Excel dosyanızı sürükleyin ve WB standartlarına uygun başlıklar alın</p>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Excel dosyanızı buraya sürükleyin veya tıklayın</div>
-            <div class="upload-hint">Desteklenen formatlar: .xlsx, .xls</div>
-            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        <div class="header">
+            <div class="logo-text">LC Waikiki</div>
+            <h1>Wildberries Başlık Düzenleyici</h1>
+            <p class="subtitle">Profesyonel başlık düzenleme aracı</p>
+            <span class="version-badge">v2.0 Professional</span>
         </div>
-
-        <div class="rules-box">
-            <div class="rules-title">✅ Uygulanan Kurallar:</div>
-            <ul class="rules-list">
-                <li>✓ Çıktı dili: Rusça</li>
-                <li>✓ Hedef kitle belirtilir: для женщин, для мужчин, для девочек, для мальчиков vb.</li>
-                <li>✓ Tekil ifadeler çoğula çevrilir (Женщина → для женщин)</li>
-                <li>✓ ":", "–", fazla virgüller temizlenir</li>
-                <li>✓ Maksimum 60 karakter</li>
-                <li>✓ SEO uyumlu, sade ve WB kategori diline uygun</li>
-                <li>✓ Büyük-küçük harf tutarlı ve düzgün</li>
-            </ul>
-        </div>
-
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill">0%</div>
+        <div class="main-content">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📊</div>
+                <div class="upload-text">Excel dosyanızı buraya sürükleyin</div>
+                <div class="upload-hint">veya tıklayarak dosya seçin (.xlsx, .xls)</div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls">
+            </div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+            </div>
+            <div class="result-area" id="resultArea">
+                <div class="stats">
+                    <div class="stat-card"><div class="stat-number" id="totalRows">0</div><div class="stat-label">Toplam Satır</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalColumns">0</div><div class="stat-label">İşlenen Sütun</div></div>
+                    <div class="stat-card"><div class="stat-number" id="processTime">0s</div><div class="stat-label">İşlem Süresi</div></div>
+                </div>
+                <div style="text-align: center; margin: 40px 0;"><button class="download-btn" id="downloadBtn">📥 Düzenlenmiş Dosyayı İndir</button></div>
+                <div id="previewContainer"></div>
             </div>
         </div>
-
-        <div class="result-area" id="resultArea">
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalRows">0</div>
-                    <div class="stat-label">Toplam Satır</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalColumns">0</div>
-                    <div class="stat-label">İşlenen Sütun</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="processTime">0s</div>
-                    <div class="stat-label">İşlem Süresi</div>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-                <button class="download-btn" id="downloadBtn">📥 Düzenlenmiş Dosyayı İndir</button>
-            </div>
-
-            <div id="previewContainer"></div>
-        </div>
+        <div class="footer">© 2026 LC Waikiki - Wildberries Başlık Düzenleyici v2.0</div>
     </div>
-
     <script>
-        class WBBaslikDuzenleyici {
-            constructor() {
-                this.hedefKitleDonusumleri = [
-                    { pattern: /\bЖенщина\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bМужчина\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bДевушка\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bДевочка\b/gi, replacement: 'для девочек' },
-                    { pattern: /\bМальчик\b/gi, replacement: 'для мальчиков' },
-                    { pattern: /\bЖенский\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенская\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенское\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенские\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bМужской\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужская\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужское\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужские\b/gi, replacement: 'для мужчин' },
-                ];
-            }
-
-            noktalamaTemizle(baslik) {
-                baslik = baslik.replace(/\s*:\s*/g, ' ');
-                baslik = baslik.replace(/\s*–\s*/g, ' ');
-                baslik = baslik.replace(/\s*—\s*/g, ' ');
-                baslik = baslik.replace(/,\s*,/g, ',');
-                baslik = baslik.replace(/,\s+([а-яА-Я])/g, ' $1');
-                return baslik;
-            }
-
-            hedefKitleDonustur(baslik) {
-                this.hedefKitleDonusumleri.forEach(({ pattern, replacement }) => {
-                    baslik = baslik.replace(pattern, replacement);
-                });
-                return baslik;
-            }
-
-            boslukDuzelt(baslik) {
-                return baslik.replace(/\s+/g, ' ').trim();
-            }
-
-            buyukKucukHarfDuzelt(baslik) {
-                if (!baslik) return baslik;
-                baslik = baslik[0].toUpperCase() + baslik.slice(1);
-                return baslik;
-            }
-
-            karakterSinirla(baslik, maxKarakter = 60) {
-                if (baslik.length <= maxKarakter) return baslik;
-                
-                let kesilmis = baslik.substring(0, maxKarakter);
-                let sonBosluk = kesilmis.lastIndexOf(' ');
-                
-                if (sonBosluk > 0) {
-                    return kesilmis.substring(0, sonBosluk).trim();
-                }
-                
-                return kesilmis.trim();
-            }
-
-            duzenle(baslik) {
-                if (!baslik || baslik === '') return '';
-                
-                baslik = String(baslik).trim();
-                baslik = this.noktalamaTemizle(baslik);
-                baslik = this.hedefKitleDonustur(baslik);
-                baslik = this.boslukDuzelt(baslik);
-                baslik = this.buyukKucukHarfDuzelt(baslik);
-                baslik = this.karakterSinirla(baslik, 60);
-                
-                return baslik;
-            }
-        }
-
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressFill = document.getElementById('progressFill');
-        const resultArea = document.getElementById('resultArea');
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        let processedWorkbook = null;
-        let duzenleyici = new WBBaslikDuzenleyici();
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) processFile(file);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) processFile(file);
-        });
-
-        function processFile(file) {
-            const startTime = Date.now();
-            
-            progressContainer.style.display = 'block';
-            resultArea.style.display = 'none';
-            updateProgress(10);
-
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    updateProgress(30);
-                    
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    updateProgress(50);
-                    
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    updateProgress(60);
-                    
-                    // Başlıkları düzenle
-                    const headers = jsonData[0];
-                    const newHeaders = [...headers];
-                    const processedData = [newHeaders];
-                    
-                    let processedColumnCount = 0;
-                    
-                    // Düzenlenecek sütunları belirle
-                    headers.forEach((header, index) => {
-                        if (header && (String(header).toLowerCase().includes('isim') || 
-                            String(header).toLowerCase().includes('название') || 
-                            String(header).toLowerCase().includes('name'))) {
-                            newHeaders.push(header + '_düzenlenmiş');
-                            processedColumnCount++;
-                        }
-                    });
-                    
-                    processedData[0] = newHeaders;
-                    
-                    updateProgress(70);
-                    
-                    // Her satırı işle
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        const newRow = [...row];
-                        
-                        headers.forEach((header, index) => {
-                            if (header && (String(header).toLowerCase().includes('isim') || 
-                                String(header).toLowerCase().includes('название') || 
-                                String(header).toLowerCase().includes('name'))) {
-                                const originalValue = row[index] || '';
-                                const duzenlenmis = duzenleyici.duzenle(originalValue);
-                                newRow.push(duzenlenmis);
-                            }
-                        });
-                        
-                        processedData.push(newRow);
-                        
-                        if (i % 100 === 0) {
-                            updateProgress(70 + (i / jsonData.length) * 20);
-                        }
-                    }
-                    
-                    updateProgress(95);
-                    
-                    // Yeni workbook oluştur
-                    const newWorksheet = XLSX.utils.aoa_to_sheet(processedData);
-                    const newWorkbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
-                    
-                    processedWorkbook = newWorkbook;
-                    
-                    updateProgress(100);
-                    
-                    const endTime = Date.now();
-                    const processTime = ((endTime - startTime) / 1000).toFixed(1);
-                    
-                    // Sonuçları göster
-                    showResults(processedData, processTime, processedColumnCount);
-                    
-                } catch (error) {
-                    console.error('İşleme hatası:', error);
-                    alert('Dosya işlenirken bir hata oluştu: ' + error.message);
-                    progressContainer.style.display = 'none';
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-
-        function updateProgress(percent) {
-            progressFill.style.width = percent + '%';
-            progressFill.textContent = Math.round(percent) + '%';
-        }
-
-        function showResults(data, processTime, processedColumnCount) {
-            setTimeout(() => {
-                progressContainer.style.display = 'none';
-                resultArea.style.display = 'block';
-                
-                document.getElementById('totalRows').textContent = data.length - 1;
-                document.getElementById('totalColumns').textContent = processedColumnCount;
-                document.getElementById('processTime').textContent = processTime + 's';
-                
-                // Önizleme tablosu oluştur
-                createPreviewTable(data);
-                
-                // Scroll to results
-                resultArea.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        }
-
-        function createPreviewTable(data) {
-            const headers = data[0];
-            const previewRows = data.slice(1, 11); // İlk 10 satır
-            
-            let tableHTML = '<h3 style="margin-top: 40px; color: #2d3748;">📊 Önizleme (İlk 10 Satır)</h3>';
-            tableHTML += '<table class="preview-table">';
-            tableHTML += '<thead><tr>';
-            
-            headers.forEach(header => {
-                tableHTML += `<th>${header || ''}</th>`;
-            });
-            
-            tableHTML += '</tr></thead><tbody>';
-            
-            previewRows.forEach(row => {
-                tableHTML += '<tr>';
-                headers.forEach((_, index) => {
-                    tableHTML += `<td>${row[index] || ''}</td>`;
-                });
-                tableHTML += '</tr>';
-            });
-            
-            tableHTML += '</tbody></table>';
-            
-            document.getElementById('previewContainer').innerHTML = tableHTML;
-        }
-
-        downloadBtn.addEventListener('click', () => {
-            if (!processedWorkbook) return;
-            
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-            const filename = `WB_duzenlenmis_${timestamp}.xlsx`;
-            
-            XLSX.writeFile(processedWorkbook, filename);
-        });
+class WBBaslikDuzenleyici{constructor(){this.hedefKitleDonusumleri=[{pattern:/\bЖенщина\b/gi,replacement:'для женщин'},{pattern:/\bМужчина\b/gi,replacement:'для мужчин'},{pattern:/\bДевушка\b/gi,replacement:'для женщин'},{pattern:/\bДевочка\b/gi,replacement:'для девочек'},{pattern:/\bМальчик\b/gi,replacement:'для мальчиков'},{pattern:/\bЖенский\b/gi,replacement:'для женщин'},{pattern:/\bЖенская\b/gi,replacement:'для женщин'},{pattern:/\bЖенское\b/gi,replacement:'для женщин'},{pattern:/\bЖенские\b/gi,replacement:'для женщин'},{pattern:/\bМужской\b/gi,replacement:'для мужчин'},{pattern:/\bМужская\b/gi,replacement:'для мужчин'},{pattern:/\bМужское\b/gi,replacement:'для мужчин'},{pattern:/\bМужские\b/gi,replacement:'для мужчин'}];this.cogulTekilDonusumleri=[{pattern:/\bСвитшоты\b/g,replacement:'Свитшот'},{pattern:/\bсвитшоты\b/g,replacement:'свитшот'},{pattern:/\bСвитеры\b/g,replacement:'Свитер'},{pattern:/\bсвитеры\b/g,replacement:'свитер'},{pattern:/\bСвитера\b/g,replacement:'Свитер'},{pattern:/\bсвитера\b/g,replacement:'свитер'},{pattern:/\bПлатья\b/g,replacement:'Платье'},{pattern:/\bплатья\b/g,replacement:'платье'},{pattern:/\bБлузки\b/g,replacement:'Блузка'},{pattern:/\bблузки\b/g,replacement:'блузка'},{pattern:/\bРубашки\b/g,replacement:'Рубашка'},{pattern:/\bрубашки\b/g,replacement:'рубашка'},{pattern:/\bФутболки\b/g,replacement:'Футболка'},{pattern:/\bфутболки\b/g,replacement:'футболка'},{pattern:/\bТуники\b/g,replacement:'Туника'},{pattern:/\bтуники\b/g,replacement:'туника'},{pattern:/\bКомбинезоны\b/g,replacement:'Комбинезон'},{pattern:/\bкомбинезоны\b/g,replacement:'комбинезон'},{pattern:/\bКомплекты\b/g,replacement:'Комплект'},{pattern:/\bкомплекты\b/g,replacement:'комплект'},{pattern:/\bТрикотажные\b/g,replacement:'Трикотажный'},{pattern:/\bтрикотажные\b/g,replacement:'трикотажный'},{pattern:/\bОднотонные\b/g,replacement:'Однотонный'},{pattern:/\bоднотонные\b/g,replacement:'однотонный'},{pattern:/\bКлассические\b/g,replacement:'Классический'},{pattern:/\bклассические\b/g,replacement:'классический'},{pattern:/\bЛетние\b/g,replacement:'Летний'},{pattern:/\bлетние\b/g,replacement:'летний'},{pattern:/\bЗимние\b/g,replacement:'Зимний'},{pattern:/\bзимние\b/g,replacement:'зимний'},{pattern:/\bПляжные\b/g,replacement:'Пляжный'},{pattern:/\bпляжные\b/g,replacement:'пляжный'},{pattern:/\bХлопковые\b/g,replacement:'Хлопковый'},{pattern:/\bхлопковые\b/g,replacement:'хлопковый'},{pattern:/\bКожаные\b/g,replacement:'Кожаный'},{pattern:/\bкожаные\b/g,replacement:'кожаный'},{pattern:/\bДомашние\b/g,replacement:'Домашний'},{pattern:/\bдомашние\b/g,replacement:'домашний'},{pattern:/\bТреккинговые\b/g,replacement:'Треккинговый'},{pattern:/\bтреккинговые\b/g,replacement:'треккинговый'},{pattern:/\bОблегающие\b/g,replacement:'Облегающий'},{pattern:/\bоблегающие\b/g,replacement:'облегающий'}];this.cogulIstisnalar=['Кроссовки','кроссовки','Сандалии','сандалии','Ботинки','ботинки','Сапоги','сапоги','Туфли','туфли','Кеды','кеды','Тапочки','тапочки','Пинетки','пинетки','Трусы','трусы','Брюки','брюки','Джинсы','джинсы','Шорты','шорты','Очки','очки']}noktalamaTemizle(t){return t.replace(/\s*:\s*/g,' ').replace(/\s*–\s*/g,' ').replace(/\s*—\s*/g,' ').replace(/\s+-\s+/g,' ').replace(/,\s*,/g,',').replace(/,\s+([А-ЯЁ][а-яё]+)/g,' $1').replace(/,\s+([а-яё]+(ая|ое|ый|ие|ые))\b/g,' $1')}cogulTekilDonustur(t){for(const e of this.cogulIstisnalar)if(t.includes(e))return t;for(const{pattern:e,replacement:n}of this.cogulTekilDonusumleri)t=t.replace(e,n);return t}hedefKitleDonustur(t){return this.hedefKitleDonusumleri.forEach(({pattern:e,replacement:n})=>{t=t.replace(e,n)}),t}boslukDuzelt(t){return t.replace(/\s+/g,' ').trim()}buyukKucukHarfDuzelt(t){return t?t[0].toUpperCase()+t.slice(1):t}karakterSinirla(t,e=60){if(t.length<=e)return t;let n=t.substring(0,e),a=n.lastIndexOf(' ');return a>0?n.substring(0,a).trim():n.trim()}duzenle(t){return t&&''!==t?(t=String(t).trim(),t=this.noktalamaTemizle(t),t=this.cogulTekilDonustur(t),t=this.hedefKitleDonustur(t),t=this.boslukDuzelt(t),t=this.buyukKucukHarfDuzelt(t),t=this.karakterSinirla(t,60)):''}}const uploadArea=document.getElementById('uploadArea'),fileInput=document.getElementById('fileInput'),progressContainer=document.getElementById('progressContainer'),progressFill=document.getElementById('progressFill'),resultArea=document.getElementById('resultArea'),downloadBtn=document.getElementById('downloadBtn');let processedWorkbook=null,duzenleyici=new WBBaslikDuzenleyici;function processFile(t){const e=Date.now();progressContainer.style.display='block',resultArea.style.display='none',updateProgress(10);const n=new FileReader;n.onload=function(t){try{updateProgress(30);const n=new Uint8Array(t.target.result),a=XLSX.read(n,{type:'array'});updateProgress(50);const r=a.SheetNames[0],s=a.Sheets[r],l=XLSX.utils.sheet_to_json(s,{header:1});updateProgress(60);const i=l[0],o=[...i],d=[o];let c=0;i.forEach((t,e)=>{t&&(String(t).toLowerCase().includes('isim')||String(t).toLowerCase().includes('название')||String(t).toLowerCase().includes('name'))&&(o.push(t+'_düzenlenmiş'),c++)}),d[0]=o,updateProgress(70);for(let t=1;t<l.length;t++){const e=l[t],n=[...e];i.forEach((a,r)=>{if(a&&(String(a).toLowerCase().includes('isim')||String(a).toLowerCase().includes('название')||String(a).toLowerCase().includes('name'))){const a=e[r]||'',s=duzenleyici.duzenle(a);n.push(s)}}),d.push(n),t%100==0&&updateProgress(70+t/l.length*20)}updateProgress(95);const p=XLSX.utils.aoa_to_sheet(d),u=XLSX.utils.book_new();XLSX.utils.book_append_sheet(u,p,r),processedWorkbook=u,updateProgress(100);const g=Date.now(),m=((g-e)/1e3).toFixed(1);showResults(d,m,c)}catch(t){console.error('İşleme hatası:',t),alert('Dosya işlenirken bir hata oluştu: '+t.message),progressContainer.style.display='none'}},n.readAsArrayBuffer(t)}function updateProgress(t){progressFill.style.width=t+'%',progressFill.textContent=Math.round(t)+'%'}function showResults(t,e,n){setTimeout(()=>{progressContainer.style.display='none',resultArea.style.display='block',document.getElementById('totalRows').textContent=t.length-1,document.getElementById('totalColumns').textContent=n,document.getElementById('processTime').textContent=e+'s',createPreviewTable(t),resultArea.scrollIntoView({behavior:'smooth'})},300)}function createPreviewTable(t){const e=t[0],n=t.slice(1,11);let a='<h3 class="preview-title">📊 Önizleme (İlk 10 Satır)</h3>';a+='<table class="preview-table"><thead><tr>',e.forEach(t=>{a+=`<th>${t||''}</th>`}),a+='</tr></thead><tbody>',n.forEach(t=>{a+='<tr>',e.forEach((e,n)=>{a+=`<td>${t[n]||''}</td>`}),a+='</tr>'}),a+='</tbody></table>',document.getElementById('previewContainer').innerHTML=a}uploadArea.addEventListener('click',()=>fileInput.click()),uploadArea.addEventListener('dragover',t=>{t.preventDefault(),uploadArea.classList.add('dragover')}),uploadArea.addEventListener('dragleave',()=>{uploadArea.classList.remove('dragover')}),uploadArea.addEventListener('drop',t=>{t.preventDefault(),uploadArea.classList.remove('dragover');const e=t.dataTransfer.files[0];e&&processFile(e)}),fileInput.addEventListener('change',t=>{const e=t.target.files[0];e&&processFile(e)}),downloadBtn.addEventListener('click',()=>{if(!processedWorkbook)return;const t=new Date().toISOString().slice(0,19).replace(/:/g,'-'),e=`WB_LCW_${t}.xlsx`;XLSX.writeFile(processedWorkbook,e)});
     </script>
 </body>
 </html>
