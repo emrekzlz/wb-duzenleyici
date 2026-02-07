@@ -3,560 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wildberries Başlık Düzenleyici</title>
+    <title>WB Profesyonel Başlık Düzenleyici (Manager Mode)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-        }
-
-        h1 {
-            color: #2d3748;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #718096;
-            margin-bottom: 40px;
-            font-size: 1.1em;
-        }
-
-        .upload-area {
-            border: 3px dashed #cbd5e0;
-            border-radius: 15px;
-            padding: 60px 40px;
-            text-align: center;
-            background: #f7fafc;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #edf2f7;
-        }
-
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #e6fffa;
-        }
-
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-
-        .upload-text {
-            font-size: 1.2em;
-            color: #4a5568;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            color: #a0aec0;
-            font-size: 0.9em;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .rules-box {
-            background: #edf2f7;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 8px;
-        }
-
-        .rules-title {
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-
-        .rules-list {
-            color: #4a5568;
-            line-height: 1.8;
-            font-size: 0.95em;
-        }
-
-        .rules-list li {
-            margin-left: 20px;
-            margin-bottom: 8px;
-        }
-
-        .progress-container {
-            display: none;
-            margin: 30px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #e2e8f0;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .result-area {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
-        .download-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 40px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            cursor: pointer;
-            border: none;
-            transition: transform 0.2s ease;
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .preview-table {
-            width: 100%;
-            margin-top: 30px;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .preview-table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .preview-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .preview-table tr:hover {
-            background: #f7fafc;
-        }
-
-        .before-after {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .before {
-            color: #e53e3e;
-            font-size: 0.9em;
-        }
-
-        .after {
-            color: #38a169;
-            font-weight: 500;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-
-        .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border-left: 4px solid #38a169;
-        }
-
-        .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border-left: 4px solid #e53e3e;
-        }
+        /* Önceki şık tasarım korundu */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; }
+        h1 { color: #1a202c; text-align: center; margin-bottom: 10px; font-size: 2.2em; }
+        .subtitle { text-align: center; color: #718096; margin-bottom: 30px; font-size: 1.1em; }
+        .upload-area { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 50px; text-align: center; background: #f7fafc; cursor: pointer; transition: 0.3s; }
+        .upload-area:hover { border-color: #2a5298; background: #ebf8ff; }
+        .rules-box { background: #fff5f5; border-left: 4px solid #fc8181; padding: 20px; margin: 30px 0; border-radius: 8px; }
+        .rules-title { font-weight: bold; color: #c53030; margin-bottom: 10px; }
+        .rules-list { font-size: 0.9em; color: #742a2a; margin-left: 20px; }
+        .btn { display: inline-block; background: #2a5298; color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; margin-top: 20px; }
+        .btn:hover { background: #1e3c72; }
+        .preview-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        .preview-table th { background: #2d3748; color: white; padding: 12px; text-align: left; }
+        .preview-table td { border-bottom: 1px solid #e2e8f0; padding: 10px; }
+        #progressContainer { display: none; margin: 20px 0; }
+        .progress-bar { width: 100%; height: 20px; background: #edf2f7; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #48bb78; width: 0%; transition: width 0.3s; }
+        #resultArea { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔄 Wildberries Başlık Düzenleyici</h1>
-        <p class="subtitle">Excel dosyanızı sürükleyin ve WB standartlarına uygun başlıklar alın</p>
+        <h1>🚀 WB Profesyonel Başlık Düzenleyici</h1>
+        <p class="subtitle">Wildberries Algoritması ve Yönetici Standartlarına Uygun Temizlik</p>
 
         <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Excel dosyanızı buraya sürükleyin veya tıklayın</div>
-            <div class="upload-hint">Desteklenen formatlar: .xlsx, .xls</div>
+            <div style="font-size: 3em; margin-bottom: 15px;">📂</div>
+            <div>Dosyayı Sürükle veya Tıkla (.xlsx)</div>
             <input type="file" id="fileInput" accept=".xlsx,.xls">
         </div>
 
         <div class="rules-box">
-            <div class="rules-title">✅ Uygulanan Kurallar:</div>
+            <div class="rules-title">⚠️ Uygulanan Katı Kurallar:</div>
             <ul class="rules-list">
-                <li>✓ Çıktı dili: Rusça</li>
-                <li>✓ Hedef kitle belirtilir: для женщин, для мужчин, для девочек, для мальчиков vb.</li>
-                <li>✓ Tekil ifadeler çoğula çevrilir (Женщина → для женщин)</li>
-                <li>✓ ":", "–", fazla virgüller temizlenir</li>
-                <li>✓ Maksimum 60 karakter</li>
-                <li>✓ SEO uyumlu, sade ve WB kategori diline uygun</li>
-                <li>✓ Büyük-küçük harf tutarlı ve düzgün</li>
+                <li><b>1. Gürültü Temizliği:</b> "Yuvarlak yaka", "Uzun kol", "2 adet", "Set" ifadeleri silinir.</li>
+                <li><b>2. Ürün Odaklı:</b> Ürün ismi (Örn: Tişört) cümlenin en başına taşınır.</li>
+                <li><b>3. Akıllı Gramer:</b> Hatalı çoğullar (Tişörtler → Tişört) düzeltilir, Şort/Pantolon korunur.</li>
+                <li><b>4. Hedef Kitle:</b> "Kadın", "Erkek" gibi kelimeler "Kadınlar için" formatına çevrilir.</li>
+                <li><b>5. Sınır:</b> Maksimum 60 karakter, noktalama işareti yok.</li>
             </ul>
         </div>
 
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill">0%</div>
-            </div>
+        <div id="progressContainer">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div style="text-align: center; margin-top: 5px;" id="progressText">0%</div>
         </div>
 
-        <div class="result-area" id="resultArea">
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalRows">0</div>
-                    <div class="stat-label">Toplam Satır</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalColumns">0</div>
-                    <div class="stat-label">İşlenen Sütun</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="processTime">0s</div>
-                    <div class="stat-label">İşlem Süresi</div>
-                </div>
+        <div id="resultArea">
+            <div style="text-align: center;">
+                <button class="btn" id="downloadBtn">📥 Düzenlenmiş Dosyayı İndir</button>
             </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-                <button class="download-btn" id="downloadBtn">📥 Düzenlenmiş Dosyayı İndir</button>
-            </div>
-
             <div id="previewContainer"></div>
         </div>
     </div>
 
     <script>
-        class WBBaslikDuzenleyici {
+        class WBManagerCleaner {
             constructor() {
-                this.hedefKitleDonusumleri = [
-                    { pattern: /\bЖенщина\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bМужчина\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bДевушка\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bДевочка\b/gi, replacement: 'для девочек' },
-                    { pattern: /\bМальчик\b/gi, replacement: 'для мальчиков' },
-                    { pattern: /\bЖенский\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенская\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенское\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bЖенские\b/gi, replacement: 'для женщин' },
-                    { pattern: /\bМужской\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужская\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужское\b/gi, replacement: 'для мужчин' },
-                    { pattern: /\bМужские\b/gi, replacement: 'для мужчин' },
+                // 1. Ürün İsimleri (Öne çekilecek ve tekil yapılacaklar)
+                this.urunSozlugu = {
+                    'футболки': 'Футболка', 'футболка': 'Футболка',
+                    'рубашки': 'Рубашка', 'рубашка': 'Рубашка',
+                    'блузки': 'Блузка', 'блузка': 'Блузка',
+                    'платья': 'Платье', 'платье': 'Платье',
+                    'костюмы': 'Костюм', 'костюм': 'Костюм',
+                    'свитера': 'Свитер', 'свитер': 'Свитер',
+                    'джемперы': 'Джемпер', 'джемпер': 'Джемпер',
+                    'толстовки': 'Толстовка', 'толстовка': 'Толстовка',
+                    'свитшоты': 'Свитшот', 'свитшот': 'Свитшот',
+                    'майки': 'Майка', 'майка': 'Майка',
+                    'топы': 'Топ', 'топ': 'Топ',
+                    'пижамы': 'Пижама', 'пижама': 'Пижама',
+                    'халаты': 'Халат', 'халат': 'Халат',
+                    'куртки': 'Куртка', 'куртка': 'Куртка',
+                    'жилеты': 'Жилет', 'жилет': 'Жилет',
+                    'комбинезоны': 'Комбинезон', 'комбинезон': 'Комбинезон',
+                    'кардиганы': 'Кардиган', 'кардиган': 'Кардиган',
+                    'боди': 'Боди',
+                    'туники': 'Туника', 'туника': 'Туника',
+                    'пальто': 'Пальто',
+                    'брюки': 'Брюки', // İstisna: Hep çoğul
+                    'шорты': 'Шорты', // İstisna: Hep çoğul
+                    'джинсы': 'Джинсы', // İstisna: Hep çoğul
+                    'леггинсы': 'Леггинсы', // İstisna: Hep çoğul
+                    'лосины': 'Лосины', // İstisna: Hep çoğul
+                    'трусы': 'Трусы', // İstisna: Hep çoğul
+                    'комплекты': 'Комплект', 'комплект': 'Комплект'
+                };
+
+                // 2. Silinecek "Gürültü" Kelimeleri (Regex)
+                this.yasakliKelimeler = [
+                    /круглый\s*вырез/gi, /v-образн[а-я]*\s*вырез[а-я]*/gi, /вырез[а-я]*/gi,
+                    /воротник[а-я]*/gi, /отложной/gi, /стойка/gi,
+                    /с\s*длинным\s*рукавом/gi, /с\s*коротким\s*рукавом/gi, /рукав[а-я]*/gi, /без\s*рукавов/gi,
+                    /стандартн[а-я]*\s*кро[яй]/gi, /свободн[а-я]*\s*кро[яй]/gi, /приталенн[а-я]*/gi, /оверсайз/gi,
+                    /из\s*хлопка/gi, /из\s*трикотажа/gi, /из\s*вискозы/gi, /хлопков[а-я]*/gi, /трикотажн[а-я]*/gi,
+                    /базов[а-я]*/gi, /повседневн[а-я]*/gi, /нарядн[а-я]*/gi,
+                    /(\d+)\s*(шт|упаков[а-я]*|пар[а-я]*|набор[а-я]*)/gi, // 2 шт, 3 упаковки sil
+                    /комплект\s*из\s*\d+.*/gi, // "komplekt iz 3..." sil
+                    /\s\d+\s*$/ // Sondaki tek rakamlar (örn: "Tişört 2")
+                ];
+
+                // 3. Hedef Kitle Dönüşümleri
+                this.hedefKitle = [
+                    { p: /женщин[аы]/gi, r: 'для женщин' },
+                    { p: /мужчин[аы]/gi, r: 'для мужчин' },
+                    { p: /девоч[а-я]*/gi, r: 'для девочек' },
+                    { p: /мальчи[а-я]*/gi, r: 'для мальчиков' },
+                    { p: /женск[а-я]*/gi, r: 'для женщин' },
+                    { p: /мужск[а-я]*/gi, r: 'для мужчин' },
+                    { p: /детск[а-я]*/gi, r: 'для детей' },
+                    { p: /малыш[а-я]*/gi, r: 'для малышей' }
                 ];
             }
 
-            noktalamaTemizle(baslik) {
-                baslik = baslik.replace(/\s*:\s*/g, ' ');
-                baslik = baslik.replace(/\s*–\s*/g, ' ');
-                baslik = baslik.replace(/\s*—\s*/g, ' ');
-                baslik = baslik.replace(/,\s*,/g, ',');
-                baslik = baslik.replace(/,\s+([а-яА-Я])/g, ' $1');
-                return baslik;
-            }
+            temizleVeDuzenle(baslik) {
+                if (!baslik) return "";
+                let orjinal = String(baslik);
+                let islenen = orjinal;
 
-            hedefKitleDonustur(baslik) {
-                this.hedefKitleDonusumleri.forEach(({ pattern, replacement }) => {
-                    baslik = baslik.replace(pattern, replacement);
+                // A. Noktalama Temizliği
+                islenen = islenen.replace(/[:;,\.\-\/\+\(\)]/g, " ");
+
+                // B. Yasaklı Kelime Temizliği (Önce bunları at ki ana ürün ortaya çıksın)
+                this.yasakliKelimeler.forEach(regex => {
+                    islenen = islenen.replace(regex, " ");
                 });
-                return baslik;
-            }
 
-            boslukDuzelt(baslik) {
-                return baslik.replace(/\s+/g, ' ').trim();
-            }
+                // C. Kelimeleri Analiz Et (Tekil/Çoğul ve Ürün Bulma)
+                let kelimeler = islenen.split(/\s+/).filter(k => k.length > 0);
+                let anaUrun = "";
+                let hedefKitleStr = "";
+                let digerKelimeler = [];
 
-            buyukKucukHarfDuzelt(baslik) {
-                if (!baslik) return baslik;
-                baslik = baslik[0].toUpperCase() + baslik.slice(1);
-                return baslik;
-            }
+                kelimeler.forEach(kelime => {
+                    let kucuk = kelime.toLowerCase();
+                    
+                    // 1. Hedef Kitle mi?
+                    let kitleBulundu = false;
+                    for (let hk of this.hedefKitle) {
+                        if (hk.p.test(kelime)) {
+                            hedefKitleStr = hk.r; // Standart formatı al
+                            kitleBulundu = true;
+                            break;
+                        }
+                    }
+                    if (kitleBulundu) return;
 
-            karakterSinirla(baslik, maxKarakter = 60) {
-                if (baslik.length <= maxKarakter) return baslik;
+                    // 2. Ana Ürün mü? (Sözlükten kontrol)
+                    // Basit stemming: son harfi atıp bak (Rusça ekler için basit önlem)
+                    if (this.urunSozlugu[kucuk]) {
+                        // Eğer daha önce ana ürün bulmadıysak bunu al
+                        // Veya "Elbise" gibi güçlü bir kelimeyse öncelik ver
+                        if (!anaUrun || kucuk.length > anaUrun.length) {
+                            if (anaUrun) digerKelimeler.push(anaUrun); // Eskisini diğerlerine at
+                            anaUrun = this.urunSozlugu[kucuk]; // Doğru halini (Tekil/Çoğul) al
+                            return;
+                        }
+                    }
+
+                    // 3. Hiçbiri değilse sıfat/detaydır
+                    // Eğer rakam değilse ekle
+                    if (!/^\d+$/.test(kelime)) {
+                        digerKelimeler.push(kelime);
+                    }
+                });
+
+                // D. Başlığı Yeniden İnşa Et (YÖNETİCİ FORMATI)
+                // Sıra: [ANA ÜRÜN] + [HEDEF KİTLE] + [DİĞERLERİ]
                 
-                let kesilmis = baslik.substring(0, maxKarakter);
-                let sonBosluk = kesilmis.lastIndexOf(' ');
-                
-                if (sonBosluk > 0) {
-                    return kesilmis.substring(0, sonBosluk).trim();
+                let yeniBaslikParcalari = [];
+
+                if (anaUrun) {
+                    yeniBaslikParcalari.push(anaUrun);
+                } else if (digerKelimeler.length > 0) {
+                    // Ana ürün bulamadıysak en baştaki kelimeyi baş harfi büyük yapıp koy
+                    let ilk = digerKelimeler.shift();
+                    ilk = ilk[0].toUpperCase() + ilk.slice(1).toLowerCase();
+                    yeniBaslikParcalari.push(ilk);
                 }
-                
-                return kesilmis.trim();
-            }
 
-            duzenle(baslik) {
-                if (!baslik || baslik === '') return '';
+                if (hedefKitleStr) {
+                    yeniBaslikParcalari.push(hedefKitleStr);
+                }
+
+                // Kalan kelimeleri ekle (İlk harfleri küçük olsun, cümle akışı için)
+                digerKelimeler.forEach(k => {
+                    // Marka isimleri veya özel isimler hariç küçük harf
+                    if (k === k.toUpperCase()) yeniBaslikParcalari.push(k); // HEPSİ BÜYÜKSE KORU
+                    else yeniBaslikParcalari.push(k.toLowerCase());
+                });
+
+                let sonuc = yeniBaslikParcalari.join(" ").trim();
+
+                // E. Son Rötuşlar ve Sınırlama
+                sonuc = sonuc.replace(/\s+/g, " "); // Çift boşlukları sil
                 
-                baslik = String(baslik).trim();
-                baslik = this.noktalamaTemizle(baslik);
-                baslik = this.hedefKitleDonustur(baslik);
-                baslik = this.boslukDuzelt(baslik);
-                baslik = this.buyukKucukHarfDuzelt(baslik);
-                baslik = this.karakterSinirla(baslik, 60);
-                
-                return baslik;
+                if (sonuc.length > 60) {
+                    sonuc = sonuc.substring(0, 60);
+                    let sonBosluk = sonuc.lastIndexOf(" ");
+                    if (sonBosluk > 0) sonuc = sonuc.substring(0, sonBosluk);
+                }
+
+                return sonuc;
             }
         }
 
+        // --- UI İşlemleri ---
+        const cleaner = new WBManagerCleaner();
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressFill = document.getElementById('progressFill');
-        const resultArea = document.getElementById('resultArea');
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        let processedWorkbook = null;
-        let duzenleyici = new WBBaslikDuzenleyici();
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
+        
+        uploadArea.onclick = () => fileInput.click();
+        
+        uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.style.borderColor = '#48bb78'; };
+        uploadArea.ondragleave = () => { uploadArea.style.borderColor = '#cbd5e0'; };
+        uploadArea.ondrop = (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+            uploadArea.style.borderColor = '#cbd5e0';
+            if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+        };
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+        fileInput.onchange = (e) => { if(e.target.files[0]) processFile(e.target.files[0]); };
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) processFile(file);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) processFile(file);
-        });
+        let resultWorkbook = null;
 
         function processFile(file) {
-            const startTime = Date.now();
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('resultArea').style.display = 'none';
             
-            progressContainer.style.display = 'block';
-            resultArea.style.display = 'none';
-            updateProgress(10);
-
             const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    updateProgress(30);
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+                // İşlem Başlıyor
+                const headers = json[0];
+                const outputData = [ [...headers, "WB_Final_Baslik"] ];
+                
+                // İsim sütununu bul
+                let nameIndex = headers.findIndex(h => h && /name|isim|название/i.test(h));
+                if (nameIndex === -1) nameIndex = 0; // Bulamazsa ilk sütun
+
+                let totalRows = json.length;
+
+                for(let i=1; i < totalRows; i++) {
+                    const row = json[i];
+                    const rawTitle = row[nameIndex];
+                    const cleanTitle = cleaner.temizleVeDuzenle(rawTitle);
                     
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    updateProgress(50);
-                    
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    updateProgress(60);
-                    
-                    // Başlıkları düzenle
-                    const headers = jsonData[0];
-                    const newHeaders = [...headers];
-                    const processedData = [newHeaders];
-                    
-                    let processedColumnCount = 0;
-                    
-                    // Düzenlenecek sütunları belirle
-                    headers.forEach((header, index) => {
-                        if (header && (String(header).toLowerCase().includes('isim') || 
-                            String(header).toLowerCase().includes('название') || 
-                            String(header).toLowerCase().includes('name'))) {
-                            newHeaders.push(header + '_düzenlenmiş');
-                            processedColumnCount++;
-                        }
-                    });
-                    
-                    processedData[0] = newHeaders;
-                    
-                    updateProgress(70);
-                    
-                    // Her satırı işle
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        const newRow = [...row];
-                        
-                        headers.forEach((header, index) => {
-                            if (header && (String(header).toLowerCase().includes('isim') || 
-                                String(header).toLowerCase().includes('название') || 
-                                String(header).toLowerCase().includes('name'))) {
-                                const originalValue = row[index] || '';
-                                const duzenlenmis = duzenleyici.duzenle(originalValue);
-                                newRow.push(duzenlenmis);
-                            }
-                        });
-                        
-                        processedData.push(newRow);
-                        
-                        if (i % 100 === 0) {
-                            updateProgress(70 + (i / jsonData.length) * 20);
-                        }
+                    const newRow = [...row];
+                    newRow.push(cleanTitle); // Sona ekle
+                    outputData.push(newRow);
+
+                    // Progress
+                    if (i % 50 === 0) {
+                        let pct = Math.round((i / totalRows) * 100);
+                        document.getElementById('progressFill').style.width = pct + "%";
+                        document.getElementById('progressText').innerText = pct + "%";
                     }
-                    
-                    updateProgress(95);
-                    
-                    // Yeni workbook oluştur
-                    const newWorksheet = XLSX.utils.aoa_to_sheet(processedData);
-                    const newWorkbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
-                    
-                    processedWorkbook = newWorkbook;
-                    
-                    updateProgress(100);
-                    
-                    const endTime = Date.now();
-                    const processTime = ((endTime - startTime) / 1000).toFixed(1);
-                    
-                    // Sonuçları göster
-                    showResults(processedData, processTime, processedColumnCount);
-                    
-                } catch (error) {
-                    console.error('İşleme hatası:', error);
-                    alert('Dosya işlenirken bir hata oluştu: ' + error.message);
-                    progressContainer.style.display = 'none';
                 }
+
+                // Tamamlandı
+                document.getElementById('progressFill').style.width = "100%";
+                document.getElementById('progressText').innerText = "100%";
+
+                // Sonuçları Hazırla
+                const newSheet = XLSX.utils.aoa_to_sheet(outputData);
+                resultWorkbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(resultWorkbook, newSheet, "WB_Cleaned");
+
+                showPreview(outputData);
+                document.getElementById('resultArea').style.display = 'block';
             };
-            
             reader.readAsArrayBuffer(file);
         }
 
-        function updateProgress(percent) {
-            progressFill.style.width = percent + '%';
-            progressFill.textContent = Math.round(percent) + '%';
+        function showPreview(data) {
+            let html = '<table class="preview-table"><thead><tr><th>Orjinal</th><th>WB Düzenlenmiş (Yönetici Formatı)</th></tr></thead><tbody>';
+            // İsim sütunu ve son sütunu al
+            let nameIdx = data[0].findIndex(h => h && /name|isim|название/i.test(h));
+            if(nameIdx === -1) nameIdx = 0;
+
+            // İlk 10 satırı göster
+            for(let i=1; i < Math.min(data.length, 11); i++) {
+                html += `<tr><td>${data[i][nameIdx] || ''}</td><td style="color:#2a5298; font-weight:bold;">${data[i][data[i].length-1]}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            document.getElementById('previewContainer').innerHTML = html;
         }
 
-        function showResults(data, processTime, processedColumnCount) {
-            setTimeout(() => {
-                progressContainer.style.display = 'none';
-                resultArea.style.display = 'block';
-                
-                document.getElementById('totalRows').textContent = data.length - 1;
-                document.getElementById('totalColumns').textContent = processedColumnCount;
-                document.getElementById('processTime').textContent = processTime + 's';
-                
-                // Önizleme tablosu oluştur
-                createPreviewTable(data);
-                
-                // Scroll to results
-                resultArea.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        }
-
-        function createPreviewTable(data) {
-            const headers = data[0];
-            const previewRows = data.slice(1, 11); // İlk 10 satır
-            
-            let tableHTML = '<h3 style="margin-top: 40px; color: #2d3748;">📊 Önizleme (İlk 10 Satır)</h3>';
-            tableHTML += '<table class="preview-table">';
-            tableHTML += '<thead><tr>';
-            
-            headers.forEach(header => {
-                tableHTML += `<th>${header || ''}</th>`;
-            });
-            
-            tableHTML += '</tr></thead><tbody>';
-            
-            previewRows.forEach(row => {
-                tableHTML += '<tr>';
-                headers.forEach((_, index) => {
-                    tableHTML += `<td>${row[index] || ''}</td>`;
-                });
-                tableHTML += '</tr>';
-            });
-            
-            tableHTML += '</tbody></table>';
-            
-            document.getElementById('previewContainer').innerHTML = tableHTML;
-        }
-
-        downloadBtn.addEventListener('click', () => {
-            if (!processedWorkbook) return;
-            
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-            const filename = `WB_duzenlenmis_${timestamp}.xlsx`;
-            
-            XLSX.writeFile(processedWorkbook, filename);
-        });
+        document.getElementById('downloadBtn').onclick = () => {
+            if(resultWorkbook) XLSX.writeFile(resultWorkbook, "WB_Yonetici_Formatli_Urunler.xlsx");
+        };
     </script>
 </body>
 </html>
