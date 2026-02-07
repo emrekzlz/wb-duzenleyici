@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WB Başlık Düzenleyici v3.0 - LC Waikiki</title>
-
+  <title>WB Başlık Düzenleyici v3.1</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -49,8 +48,8 @@
     <div class="header">
       <div class="logo-text">LC Waikiki</div>
       <h1>Wildberries Başlık Düzenleyici</h1>
-      <p class="subtitle">Genel kural seti ile kısa isim üretir</p>
-      <span class="version-badge">v3.0 (Genel Kurallar)</span>
+      <p class="subtitle">Kategori stili kısa isim üretir</p>
+      <span class="version-badge">v3.1 (Yönetici Stili)</span>
     </div>
 
     <div class="main-content">
@@ -67,18 +66,9 @@
 
       <div class="result-area" id="resultArea">
         <div class="stats">
-          <div class="stat-card">
-            <div class="stat-number" id="totalRows">0</div>
-            <div class="stat-label">Toplam Satır</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="totalColumns">0</div>
-            <div class="stat-label">İşlenen Sütun</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="processTime">0s</div>
-            <div class="stat-label">İşlem Süresi</div>
-          </div>
+          <div class="stat-card"><div class="stat-number" id="totalRows">0</div><div class="stat-label">Toplam Satır</div></div>
+          <div class="stat-card"><div class="stat-number" id="totalColumns">0</div><div class="stat-label">İşlenen Sütun</div></div>
+          <div class="stat-card"><div class="stat-number" id="processTime">0s</div><div class="stat-label">İşlem Süresi</div></div>
         </div>
 
         <div style="text-align:center;margin:40px 0;">
@@ -89,363 +79,415 @@
       </div>
     </div>
 
-    <div class="footer">© 2026 LC Waikiki - WB Başlık Düzenleyici</div>
+    <div class="footer">© 2026 - WB Başlık Düzenleyici</div>
   </div>
 
-  <script>
-    class WBBaslikDuzenleyici {
-      constructor(options = {}) {
-        this.opts = {
-          maxLen: 60,
-          includeQuantity: false,
-          sentenceCase: true,
-          moveLeadingFeatures: true,
-          ...options
-        };
+<script>
+class WBBaslikDuzenleyici {
+  constructor(options = {}) {
+    this.opts = {
+      maxLen: 60,
+      includeQuantity: false,
+      maxFeatures: 2,
+      ...options
+    };
 
-        this.hedefKitleDonusumleri = [
-          { pattern: /\bЖенщина\b/gi, replacement: "для женщин" },
-          { pattern: /\bМужчина\b/gi, replacement: "для мужчин" },
-          { pattern: /\bДевушка\b/gi, replacement: "для женщин" },
-          { pattern: /\bДевочка\b/gi, replacement: "для девочек" },
-          { pattern: /\bМальчик\b/gi, replacement: "для мальчиков" },
+    // Tekil/yapay hedef kitle -> для ...
+    this.hedefKitleDonusumleri = [
+      { re: /\bЖенщина\b/gi, out: "для женщин" },
+      { re: /\bМужчина\b/gi, out: "для мужчин" },
+      { re: /\bДевушка\b/gi, out: "для женщин" },
+      { re: /\bДевочка\b/gi, out: "для девочек" },
+      { re: /\bМальчик\b/gi, out: "для мальчиков" },
 
-          { pattern: /\bЖенский\b/gi, replacement: "для женщин" },
-          { pattern: /\bЖенская\b/gi, replacement: "для женщин" },
-          { pattern: /\bЖенское\b/gi, replacement: "для женщин" },
+      { re: /\bЖенск(ий|ая|ое)\b/gi, out: "для женщин" },
+      { re: /\bМужск(ой|ая|ое)\b/gi, out: "для мужчин" },
+    ];
 
-          { pattern: /\bМужской\b/gi, replacement: "для мужчин" },
-          { pattern: /\bМужская\b/gi, replacement: "для мужчин" },
-          { pattern: /\bМужское\b/gi, replacement: "для мужчин" }
-        ];
+    // Yönetici stilindeki ürün tipi (prefer edilen yazım: çoğu zaman çoğul)
+    // Not: Burayı genişletebilirsin; genel çalışır.
+    this.productTypes = [
+      { re: /\bкомбинезон(ы)?\b/i, out: "Комбинезоны" },
+      { re: /\bпижамн(ый|ые)\s+комплект(ы)?\b/i, out: "Пижамные комплекты" },
+      { re: /\bкомплект(ы)?\b/i, out: "Комплекты" },
+      { re: /\bрубашк(а|и)\b/i, out: "Рубашки" },
+      { re: /\bпальто\b/i, out: "Пальто" },
+      { re: /\bджоггер(ы)?\b/i, out: "Спортивные джоггеры" }, // çoğu listede böyle geçiyor
+      { re: /\bшорт(ы)?\b/i, out: "Шорты" },
+      { re: /\bбрюк(и)?\b/i, out: "Брюки" },
+      { re: /\bджинс(ы)?\b/i, out: "Джинсы" },
+      { re: /\bтрус(ы)?\b/i, out: "Трусы" },
+      { re: /\bноск(и)?\b/i, out: "Носки" },
+      { re: /\bкупальник(и)?\b/i, out: "Купальники" },
+      { re: /\bфутболк(а|и)\b/i, out: "Футболка" }, // bazen tekil bırakıyor
+      { re: /\bсвитшот(ы)?\b/i, out: "Свитшот" },
+      { re: /\bсвитер(ы)?\b/i, out: "Трикотажный свитер" },
+      { re: /\bтуник(а|и)\b/i, out: "Туника" },
+      { re: /\bкроссовк(и)?\b/i, out: "Кроссовки" },
+      { re: /\bсандал(и|ии|ия)\b/i, out: "Сандалии" },
+      { re: /\bботинк(и|а)\b/i, out: "Ботинки" },
+      { re: /\bсапог(и|а)\b/i, out: "Сапоги" },
+      { re: /\bтуфл(и|я)\b/i, out: "Туфли" },
+      { re: /\bлофер(ы)?\b/i, out: "Лоферы" },
+      { re: /\bбалетк(и|а)\b/i, out: "Балетки" },
+      { re: /\bбюстгальтер[- ]?футболка\b/i, out: "Бюстгальтер-футболка" },
+      { re: /\bбюстгальтер(ы)?\b/i, out: "Бюстгальтеры" },
+    ];
 
-        this.cogulTekilDonusumleri = [
-          { pattern: /\bСвитшоты\b/g, replacement: "Свитшот" },
-          { pattern: /\bсвитшоты\b/g, replacement: "свитшот" },
-          { pattern: /\bСвитеры\b/g, replacement: "Свитер" },
-          { pattern: /\bсвитеры\b/g, replacement: "свитер" },
-          { pattern: /\bПлатья\b/g, replacement: "Платье" },
-          { pattern: /\bплатья\b/g, replacement: "платье" },
-          { pattern: /\bБлузки\b/g, replacement: "Блузка" },
-          { pattern: /\bблузки\b/g, replacement: "блузка" },
-          { pattern: /\bРубашки\b/g, replacement: "Рубашка" },
-          { pattern: /\bрубашки\b/g, replacement: "рубашка" },
-          { pattern: /\bФутболки\b/g, replacement: "Футболка" },
-          { pattern: /\bфутболки\b/g, replacement: "футболка" },
-          { pattern: /\bКомбинезоны\b/g, replacement: "Комбинезон" },
-          { pattern: /\bкомбинезоны\b/g, replacement: "комбинезон" },
-          { pattern: /\bКомплекты\b/g, replacement: "Комплект" },
-          { pattern: /\bкомплекты\b/g, replacement: "комплект" }
-        ];
+    // Default/istenmeyen özellikler (yönetici genelde yazmıyor)
+    this.dropPhrases = [
+      /\bкругл(ый|ым)\s+вырез(ом)?\b/gi, // genelde at
+      /\bоднотонн(ый|ая|ое|ые)\b/gi,     // çoğu listede atılabiliyor
+    ];
 
-        this.cogulIstisnalar = [
-          "Кроссовки","кроссовки","Сандалии","сандалии","Ботинки","ботинки","Сапоги","сапоги",
-          "Туфли","туфли","Кеды","кеды","Тапочки","тапочки","Пинетки","пинетки",
-          "Трусы","трусы","Брюки","брюки","Джинсы","джинсы","Шорты","шорты","Очки","очки",
-          "Пальто","пальто"
-        ];
+    // Önemli özellikler (1-2 tane seçilecek) — yönetici dili
+    this.featureRules = [
+      { re: /\bс\s+липучк(ами|ой)\b/gi, out: "с липучками", score: 100 },
+      { re: /\bс\s+подсветк(ой|ами)\b/gi, out: "с подсветкой", score: 100 },
+      { re: /\bна\s+шнурк(ах|ах)\b/gi, out: "на шнурках", score: 95 },
+      { re: /\bс\s+молни(ей|ей)\b/gi, out: "с молнией", score: 95 },
+      { re: /\bс\s+капюшон(ом|ом)\b/gi, out: "с капюшоном", score: 90 },
+      { re: /\bс\s+принт(ом|ом)\b/gi, out: "с принтом", score: 85 },
+      { re: /\bв\s+полоск(у|ку)\b/gi, out: "в полоску", score: 85 },
+      { re: /\bв\s+клетк(у|ку)\b/gi, out: "в клетку", score: 85 },
+      { re: /\bс\s+длинн(ым|ыми)\s+рукав(ом|ами)\b/gi, out: "с длинным рукавом", score: 80 },
+      { re: /\bс\s+коротк(им|ими)\s+рукав(ом|ами)\b/gi, out: "с коротким рукавом", score: 80 },
+      { re: /\bс\s+V[- ]?вырез(ом)?\b/gi, out: "с V вырезом", score: 80 },
+      { re: /\bс\s+квадратн(ым|ым)\s+вырез(ом)?\b/gi, out: "с квадратным вырезом", score: 80 },
+      { re: /\bс\s+эластичн(ой|ым)\s+тал(ией|ией)\b/gi, out: "с эластичной талией", score: 75 },
+      { re: /\bс\s+эластичн(ым|ым)\s+пояс(ом|ом)\b/gi, out: "с эластичным поясом", score: 75 },
+      { re: /\bстандартн(ого|ый)\s+кроя\b/gi, out: "стандартного кроя", score: 70 },
+      { re: /\bсвободн(ого|ый)\s+кроя\b/gi, out: "свободного кроя", score: 70 },
+      { re: /\bоверсайз\b/gi, out: "оверсайз", score: 65 },
+      { re: /\bс\s+защит(ой|ой)\s+от\s+ультрафиолет(а)?\b/gi, out: "с UV защитой", score: 90 },
+    ];
 
-        this.yasakSonKelimeler = [
-          "с","со","из","от","до","без","для","к","ко","о","об","обо","у","в","во","на","за","по","под","над",
-          "и","или","а","но","что","как"
-        ];
+    // Materyal: "из ...."
+    this.materialRe = /\bиз\s+[^,]+/i;
 
-        this.urunTipleri = [
-          "Пижамный комплект","Бюстгальтер-футболка","Бюстгальтер","Комбинезон","Футболка","Блузка",
-          "Рубашка","Свитшот","Джоггеры","Брюки","Шорты","Платье","Юбка","Купальник","Комплект",
-          "Трусы","Пальто","Кроссовки","Сандалии","Ботинки","Сапоги","Туфли","Пинетки","Носки",
-          "Леггинсы","Кардиган","Толстовка","Куртка","Парка","Жилет","Лоферы","Балетки"
-        ];
+    this.yasakSonKelimeler = new Set([
+      "с","со","из","от","до","без","для","к","ко","о","об","обо","у","в","во","на","за","по","под","над","и","или","а","но","что","как"
+    ]);
+  }
 
-        this.onOzellikMap = [
-          { re: /^Круглый вырез\b/i, tail: "с круглым вырезом" },
-          { re: /^V-образный вырез\b/i, tail: "с V вырезом" },
-          { re: /^V-образным вырезом\b/i, tail: "с V вырезом" },
-          { re: /^Квадратный вырез\b/i, tail: "с квадратным вырезом" },
-          { re: /^Воротник-стойка\b/i, tail: "с воротником стойкой" }
-        ];
-      }
+  cleanSpaces(t){ return String(t||"").replace(/\s+/g," ").trim(); }
 
-      boslukDuzelt(t) { return t.replace(/\s+/g, " ").trim(); }
+  cleanPunct(t){
+    return String(t||"")
+      .replace(/[–—]/g, "-")
+      .replace(/\s*[,;:]+/g, ",")
+      .replace(/\s*,\s*/g, ", ")
+      .replace(/\s*-\s*/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
-      noktalamaTemizle(t) {
-        return t
-          .replace(/\s*:\s*/g, " ")
-          .replace(/\s*[–—]\s*/g, " ")
-          .replace(/\s+-\s+/g, " ")
-          .replace(/\s*,\s*/g, ", ")
-          .replace(/,\s*,/g, ",")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
+  stripTrailingPunct(t){ return t.replace(/[,\.;:\-–—]+$/g,"").trim(); }
 
-      sonNoktalamaTemizle(t) { return t.replace(/[,\.;:\-–—]+$/g, "").trim(); }
+  stripTrailingStopWords(t){
+    let parts = this.cleanSpaces(t).split(" ").filter(Boolean);
+    while(parts.length){
+      let last = parts[parts.length-1].toLowerCase().replace(/[.,;:]+$/g,"");
+      if(this.yasakSonKelimeler.has(last)) parts.pop();
+      else break;
+    }
+    return parts.join(" ").trim();
+  }
 
-      sonYasakKelimeTemizle(t) {
-        const parts = t.split(/\s+/).filter(Boolean);
-        if (!parts.length) return "";
-        const last = parts[parts.length - 1].toLowerCase().replace(/[.,;:]+$/g, "");
-        if (this.yasakSonKelimeler.includes(last)) parts.pop();
-        return parts.join(" ").trim();
-      }
+  removeQuantity(t){
+    return this.cleanSpaces(t)
+      .replace(/[, ]*\b\d{1,3}\s*(упаковк(и|а)?|уп\.?)\b/gi,"")
+      .replace(/[, ]*\b\d{1,3}\s*шт\.?\b/gi,"")
+      .replace(/[, ]*\b\d{1,3}\s*(pcs|pc)\b/gi,"")
+      .replace(/[, ]*\b\d{1,3}\b\s*$/g,"")
+      .trim();
+  }
 
-      removeQuantity(t) {
-        if (!t) return "";
-        return t
-          .replace(/[, ]*\b\d{1,2}\s*(упаковк(и|а)?|уп\.?)\b/gi, "")
-          .replace(/[, ]*\b\d{1,2}\s*шт\.?\b/gi, "")
-          .replace(/[, ]*\b\d{1,2}\s*(pcs|pc)\b/gi, "")
-          .replace(/[, ]*\b\d{1,2}\b\s*$/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
+  targetNormalize(t){
+    let out = t;
+    for(const r of this.hedefKitleDonusumleri){
+      out = out.replace(r.re, r.out);
+    }
+    // tekrar eden "для ..."
+    out = out.replace(/\bдля\s+(женщин|мужчин|мальчиков|девочек)\b(?:\s+для\s+\1\b)+/gi, "для $1");
+    return out;
+  }
 
-      normalizeCase(t) {
-        if (!t) return "";
-        t = t.replace(/\bДля\b/g, "для");
-        if (!this.opts.sentenceCase) return t;
-        const low = t.toLowerCase();
-        return low.charAt(0).toUpperCase() + low.slice(1);
-      }
+  detectType(t){
+    for(const p of this.productTypes){
+      if(p.re.test(t)) return p.out;
+    }
+    return "";
+  }
 
-      cogulTekilDonustur(t) {
-        for (const e of this.cogulIstisnalar) if (t.includes(e)) return t;
-        for (const { pattern, replacement } of this.cogulTekilDonusumleri) t = t.replace(pattern, replacement);
-        return t;
-      }
+  pickTarget(t){
+    const m = t.match(/\bдля\s+(женщин|мужчин|девочек|мальчиков|малышей\s+мальчиков|малышек\s+девочек|новорожденных\s+мальчиков|новорожденных\s+девочек)\b/i);
+    return m ? ("для " + m[1].replace(/\s+/g," ").trim()) : "";
+  }
 
-      hedefKitleDonustur(t) {
-        this.hedefKitleDonusumleri.forEach(({ pattern, replacement }) => { t = t.replace(pattern, replacement); });
-        t = t.replace(/\bдля (женщин|мужчин|мальчиков|девочек)\b(?:\s+для \1\b)+/gi, "для $1");
-        return t;
-      }
+  pickMaterial(t){
+    const m = t.match(this.materialRe);
+    if(!m) return "";
+    let s = m[0].trim();
+    // çok uzamasın
+    if(s.length > 28){
+      s = s.slice(0,28);
+      s = s.slice(0, s.lastIndexOf(" ")>0 ? s.lastIndexOf(" ") : s.length).trim();
+    }
+    return s;
+  }
 
-      findFirstProductIndex(t) {
-        const lower = t.toLowerCase();
-        let best = -1;
-        for (const p of this.urunTipleri) {
-          const i = lower.indexOf(p.toLowerCase());
-          if (i !== -1 && (best === -1 || i < best)) best = i;
-        }
-        return best;
-      }
-
-      headToTail(head) {
-        for (const m of this.onOzellikMap) {
-          if (m.re.test(head)) return m.tail;
-        }
-        return null;
-      }
-
-      ozellikSiraDuzelt(t) {
-        if (!t || !this.opts.moveLeadingFeatures) return t;
-
-        const idx = this.findFirstProductIndex(t);
-        if (idx <= 0) return t;
-
-        const head = t.slice(0, idx).trim();
-        const rest = t.slice(idx).trim();
-
-        const tail = this.headToTail(head);
-        if (!tail) return t;
-
-        if (new RegExp(tail, "i").test(rest)) return rest;
-        return (rest + " " + tail).replace(/\s+/g, " ").trim();
-      }
-
-      karakterSinirla(t) {
-        const max = this.opts.maxLen;
-        if (t.length <= max) return t;
-
-        let n = t.substring(0, max);
-        const a = n.lastIndexOf(" ");
-        n = a > 0 ? n.substring(0, a).trim() : n.trim();
-
-        n = this.sonNoktalamaTemizle(n);
-        n = this.sonYasakKelimeTemizle(n);
-        n = this.sonNoktalamaTemizle(n);
-
-        return n;
-      }
-
-      duzenle(input) {
-        if (!input || String(input).trim() === "") return "";
-
-        let t = String(input).trim();
-
-        t = this.noktalamaTemizle(t);
-        t = this.boslukDuzelt(t);
-
-        t = this.cogulTekilDonustur(t);
-        t = this.hedefKitleDonustur(t);
-
-        t = this.ozellikSiraDuzelt(t);
-
-        if (!this.opts.includeQuantity) {
-          t = this.removeQuantity(t);
-        }
-
-        t = this.boslukDuzelt(t);
-        t = this.karakterSinirla(t);
-
-        t = this.sonNoktalamaTemizle(t);
-        t = this.sonYasakKelimeTemizle(t);
-        t = this.sonNoktalamaTemizle(t);
-
-        t = this.normalizeCase(t);
-        return t;
+  pickFeatures(t){
+    const found = [];
+    for(const f of this.featureRules){
+      if(f.re.test(t)){
+        found.push({ out: f.out, score: f.score });
       }
     }
+    // uniq + score
+    const uniq = new Map();
+    for(const x of found){
+      const k = x.out.toLowerCase();
+      if(!uniq.has(k) || uniq.get(k).score < x.score) uniq.set(k, x);
+    }
+    const arr = Array.from(uniq.values()).sort((a,b)=>b.score-a.score).slice(0, this.opts.maxFeatures);
+    return arr.map(x=>x.out);
+  }
 
-    const uploadArea = document.getElementById("uploadArea");
-    const fileInput = document.getElementById("fileInput");
-    const progressContainer = document.getElementById("progressContainer");
-    const progressFill = document.getElementById("progressFill");
-    const resultArea = document.getElementById("resultArea");
-    const downloadBtn = document.getElementById("downloadBtn");
+  applyDropPhrases(t){
+    let out = t;
+    for(const re of this.dropPhrases){
+      out = out.replace(re, " ");
+    }
+    return this.cleanSpaces(out);
+  }
 
-    let processedWorkbook = null;
-    let duzenleyici = new WBBaslikDuzenleyici();
+  // Cyrillic kelimeleri küçült, Latin/UV/3D gibi şeyleri bozma
+  managerCase(t){
+    const tokens = this.cleanSpaces(t).split(" ");
+    const out = tokens.map((w, i) => {
+      const hasLatinOrDigit = /[A-Z0-9]/.test(w);
+      if(hasLatinOrDigit) return w;
+      const lower = w.toLowerCase();
+      if(i === 0) return lower.charAt(0).toUpperCase() + lower.slice(1);
+      return lower;
+    });
+    return out.join(" ");
+  }
 
-    function processFile(file) {
-      const start = Date.now();
-      progressContainer.style.display = "block";
-      resultArea.style.display = "none";
-      updateProgress(10);
+  smartTrim(t){
+    if(t.length <= this.opts.maxLen) return t;
+    let s = t.slice(0, this.opts.maxLen);
+    const cut = s.lastIndexOf(" ");
+    if(cut > 20) s = s.slice(0, cut).trim();
+    s = this.stripTrailingPunct(s);
+    s = this.stripTrailingStopWords(s);
+    s = this.stripTrailingPunct(s);
+    return s;
+  }
 
-      const reader = new FileReader();
-      reader.onload = function (ev) {
-        try {
-          updateProgress(30);
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, { type: "array" });
-          updateProgress(50);
+  duzenle(input){
+    if(!input || String(input).trim()==="") return "";
 
-          const sheetName = wb.SheetNames[0];
-          const sheet = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    let t = String(input).trim();
+    t = this.cleanPunct(t);
+    t = this.targetNormalize(t);
 
-          updateProgress(60);
+    if(!this.opts.includeQuantity){
+      t = this.removeQuantity(t);
+    }
 
-          const headers = rows[0] || [];
-          const outHeader = [...headers];
+    t = this.applyDropPhrases(t);
 
-          // İşlenecek başlık sütunlarını bul
-          const titleColIdxs = [];
-          headers.forEach((h, idx) => {
-            if (!h) return;
-            const s = String(h).toLowerCase();
-            if (s.includes("isim") || s.includes("название") || s.includes("name")) {
-              titleColIdxs.push(idx);
-              outHeader.push(String(h) + "_kısa");
-            }
-          });
+    const type = this.detectType(t);
+    const target = this.pickTarget(t);
+    const material = this.pickMaterial(t);
+    const features = this.pickFeatures(t);
 
-          const out = [outHeader];
-          updateProgress(70);
+    // Ürün tipi bulamazsak fallback: ilk 2-3 kelimeyi kullan
+    let head = type;
+    if(!head){
+      const parts = this.cleanSpaces(t).split(" ");
+      head = parts.slice(0, Math.min(3, parts.length)).join(" ");
+    }
 
-          for (let r = 1; r < rows.length; r++) {
-            const row = rows[r] || [];
-            const newRow = [...row];
+    // Kurulum: Type + features + material + target
+    let outParts = [head];
 
-            for (const idx of titleColIdxs) {
-              const original = row[idx] || "";
-              const edited = duzenleyici.duzenle(original);
-              newRow.push(edited);
-            }
+    for(const f of features){
+      // "с ..." ile başlayanlar yöneticide ürün tipinden sonra gelir
+      outParts.push(f);
+    }
+    if(material) outParts.push(material);
+    if(target) outParts.push(target);
 
-            out.push(newRow);
+    let out = this.cleanSpaces(outParts.join(" "));
+    out = this.stripTrailingPunct(out);
+    out = this.stripTrailingStopWords(out);
+    out = this.stripTrailingPunct(out);
 
-            if (r % 200 === 0) updateProgress(70 + (r / Math.max(1, rows.length)) * 20);
-          }
+    out = this.managerCase(out);
+    out = this.smartTrim(out);
 
-          updateProgress(95);
+    // final güvenlik
+    out = this.stripTrailingPunct(out);
+    out = this.stripTrailingStopWords(out);
+    out = this.stripTrailingPunct(out);
+    out = this.managerCase(out);
 
-          const outSheet = XLSX.utils.aoa_to_sheet(out);
-          const outWb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(outWb, outSheet, sheetName);
+    return out;
+  }
+}
 
-          processedWorkbook = outWb;
-          updateProgress(100);
+// UI
+const uploadArea = document.getElementById("uploadArea");
+const fileInput = document.getElementById("fileInput");
+const progressContainer = document.getElementById("progressContainer");
+const progressFill = document.getElementById("progressFill");
+const resultArea = document.getElementById("resultArea");
+const downloadBtn = document.getElementById("downloadBtn");
 
-          const sec = ((Date.now() - start) / 1000).toFixed(1);
-          showResults(out, sec, titleColIdxs.length);
-        } catch (err) {
-          console.error(err);
-          alert("Dosya işlenirken hata oluştu: " + err.message);
-          progressContainer.style.display = "none";
+let processedWorkbook = null;
+let duzenleyici = new WBBaslikDuzenleyici();
+
+function updateProgress(p){
+  progressFill.style.width = p + "%";
+  progressFill.textContent = Math.round(p) + "%";
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function createPreviewTable(out){
+  const header = out[0];
+  const preview = out.slice(1, 11);
+
+  let html = '<h3 class="preview-title">Önizleme (İlk 10 Satır)</h3>';
+  html += '<table class="preview-table"><thead><tr>';
+  header.forEach(h => html += `<th>${escapeHtml(h||"")}</th>`);
+  html += "</tr></thead><tbody>";
+
+  preview.forEach(row => {
+    html += "<tr>";
+    header.forEach((_, i) => html += `<td>${escapeHtml(row[i]||"")}</td>`);
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("previewContainer").innerHTML = html;
+}
+
+function showResults(out, sec, processedCols){
+  setTimeout(() => {
+    progressContainer.style.display = "none";
+    resultArea.style.display = "block";
+    document.getElementById("totalRows").textContent = out.length - 1;
+    document.getElementById("totalColumns").textContent = processedCols;
+    document.getElementById("processTime").textContent = sec + "s";
+    createPreviewTable(out);
+    resultArea.scrollIntoView({ behavior: "smooth" });
+  }, 250);
+}
+
+function processFile(file){
+  const start = Date.now();
+  progressContainer.style.display = "block";
+  resultArea.style.display = "none";
+  updateProgress(10);
+
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      updateProgress(30);
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, { type: "array" });
+      updateProgress(50);
+
+      const sheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      updateProgress(60);
+
+      const headers = rows[0] || [];
+      const outHeader = [...headers];
+
+      const titleColIdxs = [];
+      headers.forEach((h, idx) => {
+        if(!h) return;
+        const s = String(h).toLowerCase();
+        if(s.includes("isim") || s.includes("название") || s.includes("name")){
+          titleColIdxs.push(idx);
+          outHeader.push(String(h) + "_kısa");
         }
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-
-    function updateProgress(p) {
-      progressFill.style.width = p + "%";
-      progressFill.textContent = Math.round(p) + "%";
-    }
-
-    function showResults(out, sec, processedCols) {
-      setTimeout(() => {
-        progressContainer.style.display = "none";
-        resultArea.style.display = "block";
-
-        document.getElementById("totalRows").textContent = out.length - 1;
-        document.getElementById("totalColumns").textContent = processedCols;
-        document.getElementById("processTime").textContent = sec + "s";
-
-        createPreviewTable(out);
-        resultArea.scrollIntoView({ behavior: "smooth" });
-      }, 250);
-    }
-
-    function createPreviewTable(out) {
-      const header = out[0];
-      const preview = out.slice(1, 11);
-
-      let html = '<h3 class="preview-title">Önizleme (İlk 10 Satır)</h3>';
-      html += '<table class="preview-table"><thead><tr>';
-      header.forEach((h) => (html += `<th>${escapeHtml(h || "")}</th>`));
-      html += "</tr></thead><tbody>";
-
-      preview.forEach((row) => {
-        html += "<tr>";
-        header.forEach((_, i) => { html += `<td>${escapeHtml(row[i] || "")}</td>`; });
-        html += "</tr>";
       });
 
-      html += "</tbody></table>";
-      document.getElementById("previewContainer").innerHTML = html;
+      const out = [outHeader];
+      updateProgress(70);
+
+      for(let r=1; r<rows.length; r++){
+        const row = rows[r] || [];
+        const newRow = [...row];
+
+        for(const idx of titleColIdxs){
+          const original = row[idx] || "";
+          const edited = duzenleyici.duzenle(original);
+          newRow.push(edited);
+        }
+
+        out.push(newRow);
+        if(r % 200 === 0){
+          updateProgress(70 + (r / Math.max(1, rows.length)) * 20);
+        }
+      }
+
+      updateProgress(95);
+
+      const outSheet = XLSX.utils.aoa_to_sheet(out);
+      const outWb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(outWb, outSheet, sheetName);
+
+      processedWorkbook = outWb;
+      updateProgress(100);
+
+      const sec = ((Date.now() - start)/1000).toFixed(1);
+      showResults(out, sec, titleColIdxs.length);
+
+    }catch(err){
+      console.error(err);
+      alert("Dosya işlenirken hata oluştu: " + err.message);
+      progressContainer.style.display = "none";
     }
+  };
 
-    function escapeHtml(s) {
-      return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+  reader.readAsArrayBuffer(file);
+}
 
-    uploadArea.addEventListener("click", () => fileInput.click());
-    uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); uploadArea.classList.add("dragover"); });
-    uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
-    uploadArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove("dragover");
-      const file = e.dataTransfer.files[0];
-      if (file) processFile(file);
-    });
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) processFile(file);
-    });
+uploadArea.addEventListener("click", () => fileInput.click());
+uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); uploadArea.classList.add("dragover"); });
+uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
+uploadArea.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if(file) processFile(file);
+});
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(file) processFile(file);
+});
 
-    downloadBtn.addEventListener("click", () => {
-      if (!processedWorkbook) return;
-      const t = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-      XLSX.writeFile(processedWorkbook, `WB_LCW_${t}.xlsx`);
-    });
-  </script>
+downloadBtn.addEventListener("click", () => {
+  if(!processedWorkbook) return;
+  const t = new Date().toISOString().slice(0,19).replace(/:/g,"-");
+  XLSX.writeFile(processedWorkbook, `WB_LCW_${t}.xlsx`);
+});
+</script>
 </body>
 </html>
