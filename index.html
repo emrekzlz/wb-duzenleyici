@@ -1,408 +1,225 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WB Başlık Düzenleyici v2.0 - LC Waikiki</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #0051A5 0%, #003D7A 100%); min-height: 100vh; padding: 40px 20px; }
-    .container { max-width: 1000px; margin: 0 auto; }
-    .header { background: white; padding: 40px; border-radius: 20px 20px 0 0; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center; }
-    .logo-text { font-size: 3em; font-weight: 900; color: #0051A5; letter-spacing: -2px; margin-bottom: 20px; }
-    .header h1 { color: #0051A5; font-size: 2.2em; font-weight: 700; margin-bottom: 10px; }
-    .subtitle { color: #666; font-size: 1.1em; margin-bottom: 20px; }
-    .version-badge { display: inline-block; background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 8px 20px; border-radius: 25px; font-size: 0.85em; font-weight: 600; }
-    .main-content { background: white; padding: 50px 40px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-    .upload-area { border: 3px dashed #0051A5; border-radius: 15px; padding: 80px 40px; text-align: center; background: linear-gradient(135deg, #f8f9ff, #e8f0ff); cursor: pointer; transition: all 0.3s; }
-    .upload-area:hover { border-color: #003D7A; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,81,165,0.2); }
-    .upload-area.dragover { background: linear-gradient(135deg, #e8f0ff, #d0e4ff); transform: scale(1.02); }
-    .upload-icon { font-size: 5em; margin-bottom: 20px; }
-    .upload-text { font-size: 1.4em; color: #0051A5; font-weight: 600; margin-bottom: 15px; }
-    .upload-hint { color: #666; }
-    input[type="file"] { display: none; }
-    .progress-container { display: none; margin: 40px 0; }
-    .progress-bar { width: 100%; height: 35px; background: #e8f0ff; border-radius: 20px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #0051A5, #003D7A); width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1em; }
-    .result-area { display: none; margin-top: 40px; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
-    .stat-card { background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 35px 30px; border-radius: 15px; text-align: center; box-shadow: 0 8px 20px rgba(0,81,165,0.3); transition: transform 0.3s; }
-    .stat-card:hover { transform: translateY(-5px); }
-    .stat-number { font-size: 3em; font-weight: bold; margin-bottom: 10px; }
-    .stat-label { font-size: 1em; opacity: 0.95; }
-    .download-btn { display: inline-block; background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 18px 50px; border-radius: 12px; font-weight: bold; font-size: 1.2em; cursor: pointer; border: none; transition: all 0.3s; box-shadow: 0 6px 20px rgba(0,81,165,0.3); }
-    .download-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,81,165,0.4); }
-    .preview-table { width: 100%; margin-top: 40px; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .preview-table th { background: linear-gradient(135deg, #0051A5, #003D7A); color: white; padding: 18px; text-align: left; font-weight: 600; }
-    .preview-table td { padding: 15px 18px; border-bottom: 1px solid #e8f0ff; }
-    .preview-table tr:hover { background: #f8f9ff; }
-    .preview-title { color: #0051A5; font-size: 1.5em; font-weight: 600; margin-top: 50px; margin-bottom: 20px; }
-    .footer { text-align: center; margin-top: 30px; color: white; font-size: 0.9em; opacity: 0.9; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo-text">LC Waikiki</div>
-      <h1>Wildberries Başlık Düzenleyici</h1>
-      <p class="subtitle">Profesyonel başlık düzenleme aracı</p>
-      <span class="version-badge">v2.0 Professional</span>
-    </div>
+class WBBaslikDuzenleyici {
+  constructor(options = {}) {
+    // ✅ GENEL AYARLAR (dataset’e bağlı değil)
+    this.opts = {
+      maxLen: 60,
+      includeQuantity: false,   // ✅ Yeşil liste standardı: adet yazma
+      sentenceCase: true,       // ilk harf büyük, devamı küçük
+      moveLeadingFeatures: true,// "Круглый вырез ..." -> sona taşı
+      ...options
+    };
 
-    <div class="main-content">
-      <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📊</div>
-        <div class="upload-text">Excel dosyanızı buraya sürükleyin</div>
-        <div class="upload-hint">veya tıklayarak dosya seçin (.xlsx, .xls)</div>
-        <input type="file" id="fileInput" accept=".xlsx,.xls" />
-      </div>
+    // Tekil/yapay hedef kitle ifadeleri -> для ...
+    // (Çoğul "Женские/Мужские" DOKUNMA: bazı listelerde doğru kalıyor)
+    this.hedefKitleDonusumleri = [
+      { pattern: /\bЖенщина\b/gi, replacement: "для женщин" },
+      { pattern: /\bМужчина\b/gi, replacement: "для мужчин" },
+      { pattern: /\bДевушка\b/gi, replacement: "для женщин" },
+      { pattern: /\bДевочка\b/gi, replacement: "для девочек" },
+      { pattern: /\bМальчик\b/gi, replacement: "для мальчиков" },
 
-      <div class="progress-container" id="progressContainer">
-        <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
-      </div>
+      { pattern: /\bЖенский\b/gi, replacement: "для женщин" },
+      { pattern: /\bЖенская\b/gi, replacement: "для женщин" },
+      { pattern: /\bЖенское\b/gi, replacement: "для женщин" },
 
-      <div class="result-area" id="resultArea">
-        <div class="stats">
-          <div class="stat-card"><div class="stat-number" id="totalRows">0</div><div class="stat-label">Toplam Satır</div></div>
-          <div class="stat-card"><div class="stat-number" id="totalColumns">0</div><div class="stat-label">İşlenen Sütun</div></div>
-          <div class="stat-card"><div class="stat-number" id="processTime">0s</div><div class="stat-label">İşlem Süresi</div></div>
-        </div>
+      { pattern: /\bМужской\b/gi, replacement: "для мужчин" },
+      { pattern: /\bМужская\b/gi, replacement: "для мужчин" },
+      { pattern: /\bМужское\b/gi, replacement: "для мужчин" },
+    ];
 
-        <div style="text-align:center;margin:40px 0;">
-          <button class="download-btn" id="downloadBtn">📥 Düzenlenmiş Dosyayı İndir</button>
-        </div>
+    // Basit çoğul->tekil dönüşümler (genel; istisnalarla)
+    this.cogulTekilDonusumleri = [
+      { pattern: /\bСвитшоты\b/g, replacement: "Свитшот" },
+      { pattern: /\bсвитшоты\b/g, replacement: "свитшот" },
+      { pattern: /\bСвитеры\b/g, replacement: "Свитер" },
+      { pattern: /\bсвитеры\b/g, replacement: "свитер" },
+      { pattern: /\bПлатья\b/g, replacement: "Платье" },
+      { pattern: /\bплатья\b/g, replacement: "платье" },
+      { pattern: /\bБлузки\b/g, replacement: "Блузка" },
+      { pattern: /\bблузки\b/g, replacement: "блузка" },
+      { pattern: /\bРубашки\b/g, replacement: "Рубашка" },
+      { pattern: /\bрубашки\b/g, replacement: "рубашка" },
+      { pattern: /\bФутболки\b/g, replacement: "Футболка" },
+      { pattern: /\bфутболки\b/g, replacement: "футболка" },
+      { pattern: /\bКомбинезоны\b/g, replacement: "Комбинезон" },
+      { pattern: /\bкомбинезоны\b/g, replacement: "комбинезон" },
+      { pattern: /\bКомплекты\b/g, replacement: "Комплект" },
+      { pattern: /\bкомплекты\b/g, replacement: "комплект" },
+    ];
 
-        <div id="previewContainer"></div>
-      </div>
-    </div>
+    // Çoğul istisnalar (genel ayakkabı/alt giyim gibi)
+    this.cogulIstisnalar = [
+      "Кроссовки","кроссовки","Сандалии","сандалии","Ботинки","ботинки","Сапоги","сапоги",
+      "Туфли","туфли","Кеды","кеды","Тапочки","тапочки","Пинетки","пинетки",
+      "Трусы","трусы","Брюки","брюки","Джинсы","джинсы","Шорты","шорты","Очки","очки",
+      "Пальто","пальто" // bazen plural/singular karışır; dokunmamak daha güvenli
+    ];
 
-    <div class="footer">© 2026 LC Waikiki - Wildberries Başlık Düzenleyici v2.0</div>
-  </div>
+    // Sonda kalınca kötü duran bağlaç/edatlar
+    this.yasakSonKelimeler = [
+      "с","со","из","от","до","без","для","к","ко","о","об","обо","у","в","во","на","за","по","под","над",
+      "и","или","а","но","что","как"
+    ];
 
-  <script>
-    class WBBaslikDuzenleyici {
-      constructor() {
-        this.hedefKitleDonusumleri = [
-          { pattern: /\bЖенщина\b/gi, replacement: "для женщин" },
-          { pattern: /\bМужчина\b/gi, replacement: "для мужчин" },
-          { pattern: /\bДевушка\b/gi, replacement: "для женщин" },
-          { pattern: /\bДевочка\b/gi, replacement: "для девочек" },
-          { pattern: /\bМальчик\b/gi, replacement: "для мальчиков" },
-          { pattern: /\bЖенский\b/gi, replacement: "для женщин" },
-          { pattern: /\bЖенская\b/gi, replacement: "для женщин" },
-          { pattern: /\bЖенское\b/gi, replacement: "для женщин" },
-          { pattern: /\bЖенские\b/gi, replacement: "для женщин" },
-          { pattern: /\bМужской\b/gi, replacement: "для мужчин" },
-          { pattern: /\bМужская\b/gi, replacement: "для мужчин" },
-          { pattern: /\bМужское\b/gi, replacement: "для мужчин" },
-          { pattern: /\bМужские\b/gi, replacement: "для мужчин" },
-        ];
+    // Ürün tipi listesi (sıra düzeltme için)
+    this.urunTipleri = [
+      "Комбинезон","Футболка","Блузка","Рубашка","Свитшот","Джоггеры","Брюки","Шорты","Платье","Юбка",
+      "Купальник","Пижамный комплект","Комплект","Трусы","Бюстгальтер","Пальто","Кроссовки","Сандалии",
+      "Ботинки","Сапоги","Туфли","Пинетки","Носки","Леггинсы","Кардиган","Толстовка","Куртка","Парка",
+      "Жилет","Лоферы","Балетки"
+    ];
 
-        this.cogulTekilDonusumleri = [
-          { pattern: /\bСвитшоты\b/g, replacement: "Свитшот" },
-          { pattern: /\bсвитшоты\b/g, replacement: "свитшот" },
-          { pattern: /\bСвитеры\b/g, replacement: "Свитер" },
-          { pattern: /\bсвитеры\b/g, replacement: "свитер" },
-          { pattern: /\bСвитера\b/g, replacement: "Свитер" },
-          { pattern: /\bсвитера\b/g, replacement: "свитер" },
-          { pattern: /\bПлатья\b/g, replacement: "Платье" },
-          { pattern: /\bплатья\b/g, replacement: "платье" },
-          { pattern: /\bБлузки\b/g, replacement: "Блузка" },
-          { pattern: /\bблузки\b/g, replacement: "блузка" },
-          { pattern: /\bРубашки\b/g, replacement: "Рубашка" },
-          { pattern: /\bрубашки\b/g, replacement: "рубашка" },
-          { pattern: /\bФутболки\b/g, replacement: "Футболка" },
-          { pattern: /\bфутболки\b/g, replacement: "футболка" },
-          { pattern: /\bТуники\b/g, replacement: "Туника" },
-          { pattern: /\bтуники\b/g, replacement: "туника" },
-          { pattern: /\bКомбинезоны\b/g, replacement: "Комбинезон" },
-          { pattern: /\bкомбинезоны\b/g, replacement: "комбинезон" },
-          { pattern: /\bКомплекты\b/g, replacement: "Комплект" },
-          { pattern: /\bкомплекты\b/g, replacement: "комплект" },
-          { pattern: /\bТрикотажные\b/g, replacement: "Трикотажный" },
-          { pattern: /\bтрикотажные\b/g, replacement: "трикотажный" },
-          { pattern: /\bОднотонные\b/g, replacement: "Однотонный" },
-          { pattern: /\bоднотонные\b/g, replacement: "однотонный" },
-          { pattern: /\bКлассические\b/g, replacement: "Классический" },
-          { pattern: /\bклассические\b/g, replacement: "классический" },
-          { pattern: /\bЛетние\b/g, replacement: "Летний" },
-          { pattern: /\bлетние\b/g, replacement: "летний" },
-          { pattern: /\bЗимние\b/g, replacement: "Зимний" },
-          { pattern: /\bзимние\b/g, replacement: "зимний" },
-          { pattern: /\bПляжные\b/g, replacement: "Пляжный" },
-          { pattern: /\bпляжные\b/g, replacement: "пляжный" },
-          { pattern: /\bХлопковые\b/g, replacement: "Хлопковый" },
-          { pattern: /\bхлопковые\b/g, replacement: "хлопковый" },
-          { pattern: /\bКожаные\b/g, replacement: "Кожаный" },
-          { pattern: /\bкожаные\b/g, replacement: "кожаный" },
-          { pattern: /\bДомашние\b/g, replacement: "Домашний" },
-          { pattern: /\bдомашние\b/g, replacement: "домашний" },
-          { pattern: /\bТреккинговые\b/g, replacement: "Треккинговый" },
-          { pattern: /\bтреккинговые\b/g, replacement: "треккинговый" },
-          { pattern: /\bОблегающие\b/g, replacement: "Облегающий" },
-          { pattern: /\bоблегающие\b/g, replacement: "облегающий" },
-        ];
+    // Baştaki bazı özellikleri sona taşıma
+    this.onOzellikMap = [
+      { re: /^Круглый вырез\b/i, tail: "с круглым вырезом" },
+      { re: /^V-образный вырез\b/i, tail: "с V вырезом" },
+      { re: /^V-образным вырезом\b/i, tail: "с V вырезом" },
+      { re: /^Воротник-стойка\b/i, tail: "с воротником стойкой" },
+      { re: /^Квадратный вырез\b/i, tail: "с квадратным вырезом" },
+    ];
+  }
 
-        this.cogulIstisnalar = [
-          "Кроссовки","кроссовки","Сандалии","сандалии","Ботинки","ботинки","Сапоги","сапоги",
-          "Туфли","туфли","Кеды","кеды","Тапочки","тапочки","Пинетки","пинетки",
-          "Трусы","трусы","Брюки","брюки","Джинсы","джинсы","Шорты","шорты","Очки","очки"
-        ];
+  // --- Temizleme ---
+  boslukDuzelt(t){ return t.replace(/\s+/g," ").trim(); }
 
-        // ✅ WB fix: başlık edat/bağlaç ile bitmesin
-        this.yasakSonKelimeler = [
-          "с","со","из","от","до","без","для","к","ко","о","об","обо","у","в","во","на","за","по","под","над",
-          "и","или","а","но","что","как"
-        ];
-      }
+  noktalamaTemizle(t){
+    return t
+      .replace(/\s*:\s*/g," ")
+      .replace(/\s*[–—]\s*/g," ")
+      .replace(/\s+-\s+/g," ")
+      .replace(/\s*,\s*/g,", ")
+      .replace(/,\s*,/g,",")
+      .replace(/\s*\(\s*/g," (")
+      .replace(/\s*\)\s*/g,") ")
+      .replace(/\s+/g," ")
+      .trim();
+  }
 
-      noktalamaTemizle(t) {
-        return t
-          .replace(/\s*:\s*/g, " ")
-          .replace(/\s*–\s*/g, " ")
-          .replace(/\s*—\s*/g, " ")
-          .replace(/\s+-\s+/g, " ")
-          .replace(/,\s*,/g, ",")
-          .replace(/,\s+([А-ЯЁ][а-яё]+)/g, " $1")
-          .replace(/,\s+([а-яё]+(ая|ое|ый|ие|ые))\b/g, " $1");
-      }
+  sonNoktalamaTemizle(t){
+    return t.replace(/[,\.;:\-–—]+$/g,"").trim();
+  }
 
-      cogulTekilDonustur(t) {
-        for (const e of this.cogulIstisnalar) if (t.includes(e)) return t;
-        for (const { pattern, replacement } of this.cogulTekilDonusumleri) t = t.replace(pattern, replacement);
-        return t;
-      }
+  sonYasakKelimeTemizle(t){
+    const parts=t.split(/\s+/).filter(Boolean);
+    if(!parts.length) return "";
+    const last=parts[parts.length-1].toLowerCase().replace(/[.,;:]+$/g,"");
+    if(this.yasakSonKelimeler.includes(last)) parts.pop();
+    return parts.join(" ").trim();
+  }
 
-      hedefKitleDonustur(t) {
-        this.hedefKitleDonusumleri.forEach(({ pattern, replacement }) => {
-          t = t.replace(pattern, replacement);
-        });
-        return t;
-      }
+  // ✅ yönetici standardı: adet/paket kısa isimde yazma (genel kural)
+  removeQuantity(t){
+    if(!t) return "";
+    return t
+      .replace(/[, ]*\b\d{1,2}\s*(упаковк(и|а)?|уп\.?)\b/gi,"")
+      .replace(/[, ]*\b\d{1,2}\s*шт\.?\b/gi,"")
+      .replace(/[, ]*\b\d{1,2}\s*(pcs|pc)\b/gi,"")
+      .replace(/[, ]*\b\d{1,2}\b\s*$/g,"")
+      .replace(/\s+/g," ")
+      .trim();
+  }
 
-      boslukDuzelt(t) {
-        return t.replace(/\s+/g, " ").trim();
-      }
+  normalizeCase(t){
+    if(!t) return "";
+    t = t.replace(/\bДля\b/g,"для");
+    if(!this.opts.sentenceCase) return t;
+    const low=t.toLowerCase();
+    return low.charAt(0).toUpperCase()+low.slice(1);
+  }
 
-      buyukKucukHarfDuzelt(t) {
-        return t ? t[0].toUpperCase() + t.slice(1) : t;
-      }
+  // --- Dönüşümler ---
+  cogulTekilDonustur(t){
+    for(const e of this.cogulIstisnalar) if(t.includes(e)) return t;
+    for(const {pattern,replacement} of this.cogulTekilDonusumleri) t=t.replace(pattern,replacement);
+    return t;
+  }
 
-      // ✅ WB fix: sonda kalan noktalama temizliği
-      sonNoktalamaTemizle(t) {
-        return t.replace(/[,\.;:\-–—]+$/g, "").trim();
-      }
+  hedefKitleDonustur(t){
+    this.hedefKitleDonusumleri.forEach(({pattern,replacement})=>{
+      t=t.replace(pattern,replacement);
+    });
+    // aynı hedef kitle tekrarı varsa sadeleştir
+    t=t.replace(/\bдля (женщин|мужчин|мальчиков|девочек)\b(?:\s+для \1\b)+/gi,"для $1");
+    return t;
+  }
 
-      // ✅ WB fix: sonda tek başına kalan edat/bağlaç varsa kaldır
-      sonYasakKelimeTemizle(t) {
-        const parts = t.split(/\s+/).filter(Boolean);
-        if (parts.length === 0) return "";
-        const last = parts[parts.length - 1].toLowerCase().replace(/[.,;:]+$/g, "");
-        if (this.yasakSonKelimeler.includes(last)) parts.pop();
-        return parts.join(" ").trim();
-      }
+  // --- Sıra düzeltme (genel) ---
+  escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
 
-      // ✅ WB fix: kırpma sonrası edat/virgül hatalarını düzelt
-      karakterSinirla(t, e = 60) {
-        if (t.length <= e) return t;
+  findFirstProductIndex(t){
+    const lower=t.toLowerCase();
+    let best=-1;
+    for(const p of this.urunTipleri){
+      const i=lower.indexOf(p.toLowerCase());
+      if(i!==-1 && (best===-1 || i<best)) best=i;
+    }
+    return best;
+  }
 
-        let n = t.substring(0, e);
-        let a = n.lastIndexOf(" ");
-        n = a > 0 ? n.substring(0, a).trim() : n.trim();
+  headToTail(head){
+    for(const m of this.onOzellikMap){
+      if(m.re.test(head)) return m.tail;
+    }
+    return null;
+  }
 
-        n = this.sonNoktalamaTemizle(n);
-        n = this.sonYasakKelimeTemizle(n);
-        n = this.sonNoktalamaTemizle(n);
+  ozellikSiraDuzelt(t){
+    if(!t || !this.opts.moveLeadingFeatures) return t;
 
-        return n;
-      }
+    const idx=this.findFirstProductIndex(t);
+    if(idx<=0) return t;
 
-      duzenle(t) {
-        if (!t || String(t).trim() === "") return "";
+    const head=t.slice(0,idx).trim();
+    const rest=t.slice(idx).trim();
+    const tail=this.headToTail(head);
+    if(!tail) return t;
 
-        t = String(t).trim();
-        t = this.noktalamaTemizle(t);
-        t = this.cogulTekilDonustur(t);
-        t = this.hedefKitleDonustur(t);
-        t = this.boslukDuzelt(t);
-        t = this.buyukKucukHarfDuzelt(t);
+    if(new RegExp(this.escapeRegExp(tail),"i").test(rest)) return rest;
+    return (rest+" "+tail).replace(/\s+/g," ").trim();
+  }
 
-        t = this.karakterSinirla(t, 60);
+  // --- Kırpma ---
+  karakterSinirla(t){
+    const max=this.opts.maxLen;
+    if(t.length<=max) return t;
 
-        // final güvenlik (bazı edge-case’lerde yeniden sonda kalabiliyor)
-        t = this.sonNoktalamaTemizle(t);
-        t = this.sonYasakKelimeTemizle(t);
-        t = this.sonNoktalamaTemizle(t);
+    let n=t.substring(0,max);
+    const a=n.lastIndexOf(" ");
+    n=a>0 ? n.substring(0,a).trim() : n.trim();
 
-        return t;
-      }
+    n=this.sonNoktalamaTemizle(n);
+    n=this.sonYasakKelimeTemizle(n);
+    n=this.sonNoktalamaTemizle(n);
+    return n;
+  }
+
+  // ✅ ana fonksiyon
+  duzenle(input){
+    if(!input || String(input).trim()==="") return "";
+
+    let t=String(input).trim();
+    t=this.noktalamaTemizle(t);
+    t=this.boslukDuzelt(t);
+
+    t=this.cogulTekilDonustur(t);
+    t=this.hedefKitleDonustur(t);
+
+    t=this.ozellikSiraDuzelt(t);
+
+    // ✅ genel kural: kısa isimde adet yok
+    if(!this.opts.includeQuantity){
+      t=this.removeQuantity(t);
     }
 
-    const uploadArea = document.getElementById("uploadArea"),
-      fileInput = document.getElementById("fileInput"),
-      progressContainer = document.getElementById("progressContainer"),
-      progressFill = document.getElementById("progressFill"),
-      resultArea = document.getElementById("resultArea"),
-      downloadBtn = document.getElementById("downloadBtn");
+    t=this.boslukDuzelt(t);
+    t=this.karakterSinirla(t);
 
-    let processedWorkbook = null,
-      duzenleyici = new WBBaslikDuzenleyici();
+    // final güvenlik
+    t=this.sonNoktalamaTemizle(t);
+    t=this.sonYasakKelimeTemizle(t);
+    t=this.sonNoktalamaTemizle(t);
 
-    function processFile(file) {
-      const start = Date.now();
-      progressContainer.style.display = "block";
-      resultArea.style.display = "none";
-      updateProgress(10);
-
-      const reader = new FileReader();
-      reader.onload = function (ev) {
-        try {
-          updateProgress(30);
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, { type: "array" });
-          updateProgress(50);
-
-          const sheetName = wb.SheetNames[0];
-          const sheet = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-          updateProgress(60);
-
-          const headers = rows[0];
-          const newHeaders = [...headers];
-          const out = [newHeaders];
-
-          let processedCols = 0;
-
-          headers.forEach((h) => {
-            if (
-              h &&
-              (String(h).toLowerCase().includes("isim") ||
-                String(h).toLowerCase().includes("название") ||
-                String(h).toLowerCase().includes("name"))
-            ) {
-              newHeaders.push(h + "_düzenlenmiş");
-              processedCols++;
-            }
-          });
-
-          out[0] = newHeaders;
-          updateProgress(70);
-
-          for (let r = 1; r < rows.length; r++) {
-            const row = rows[r];
-            const newRow = [...row];
-
-            headers.forEach((h, idx) => {
-              if (
-                h &&
-                (String(h).toLowerCase().includes("isim") ||
-                  String(h).toLowerCase().includes("название") ||
-                  String(h).toLowerCase().includes("name"))
-              ) {
-                const original = row[idx] || "";
-                const edited = duzenleyici.duzenle(original);
-                newRow.push(edited);
-              }
-            });
-
-            out.push(newRow);
-
-            if (r % 100 === 0) updateProgress(70 + (r / rows.length) * 20);
-          }
-
-          updateProgress(95);
-
-          const outSheet = XLSX.utils.aoa_to_sheet(out);
-          const outWb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(outWb, outSheet, sheetName);
-
-          processedWorkbook = outWb;
-          updateProgress(100);
-
-          const end = Date.now();
-          const sec = ((end - start) / 1000).toFixed(1);
-          showResults(out, sec, processedCols);
-        } catch (err) {
-          console.error("İşleme hatası:", err);
-          alert("Dosya işlenirken bir hata oluştu: " + err.message);
-          progressContainer.style.display = "none";
-        }
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-
-    function updateProgress(p) {
-      progressFill.style.width = p + "%";
-      progressFill.textContent = Math.round(p) + "%";
-    }
-
-    function showResults(out, sec, processedCols) {
-      setTimeout(() => {
-        progressContainer.style.display = "none";
-        resultArea.style.display = "block";
-
-        document.getElementById("totalRows").textContent = out.length - 1;
-        document.getElementById("totalColumns").textContent = processedCols;
-        document.getElementById("processTime").textContent = sec + "s";
-
-        createPreviewTable(out);
-        resultArea.scrollIntoView({ behavior: "smooth" });
-      }, 300);
-    }
-
-    function createPreviewTable(out) {
-      const header = out[0];
-      const preview = out.slice(1, 11);
-
-      let html = '<h3 class="preview-title">📊 Önizleme (İlk 10 Satır)</h3>';
-      html += '<table class="preview-table"><thead><tr>';
-      header.forEach((h) => (html += `<th>${h || ""}</th>`));
-      html += "</tr></thead><tbody>";
-
-      preview.forEach((row) => {
-        html += "<tr>";
-        header.forEach((_, i) => {
-          html += `<td>${row[i] || ""}</td>`;
-        });
-        html += "</tr>";
-      });
-
-      html += "</tbody></table>";
-      document.getElementById("previewContainer").innerHTML = html;
-    }
-
-    uploadArea.addEventListener("click", () => fileInput.click());
-
-    uploadArea.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      uploadArea.classList.add("dragover");
-    });
-
-    uploadArea.addEventListener("dragleave", () => {
-      uploadArea.classList.remove("dragover");
-    });
-
-    uploadArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove("dragover");
-      const file = e.dataTransfer.files[0];
-      if (file) processFile(file);
-    });
-
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) processFile(file);
-    });
-
-    downloadBtn.addEventListener("click", () => {
-      if (!processedWorkbook) return;
-      const t = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-      const filename = `WB_LCW_${t}.xlsx`;
-      XLSX.writeFile(processedWorkbook, filename);
-    });
-  </script>
-</body>
-</html>
+    t=this.normalizeCase(t);
+    return t;
+  }
+}
