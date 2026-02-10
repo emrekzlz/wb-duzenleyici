@@ -1,244 +1,723 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WB Kurallı Düzenleyici (Silmeden Düzenle)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #f0f4f8; padding: 30px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
-        .box { border: 2px dashed #bdc3c7; padding: 40px; text-align: center; margin: 20px 0; cursor: pointer; background: #ecf0f1; }
-        .box:hover { border-color: #3498db; background: #e8f4fc; }
-        .btn { display: block; width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px; }
-        .btn:hover { background: #219150; }
-        #preview { margin-top: 20px; width: 100%; border-collapse: collapse; }
-        #preview th, #preview td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        #preview th { background-color: #f2f2f2; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wildberries Başlık Optimizasyonu (Excel → 60 Karakter)</title>
+
+  <!-- XLSX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#0b1220; --bg2:#0a1a3a;
+      --card:#0f1b33; --card2:#0c1630;
+      --text:#e9f0ff; --muted:#9fb2d6;
+      --acc:#4f8cff; --acc2:#2f6fff;
+      --ok:#31d07f; --bad:#ff5d5d; --warn:#ffcc66;
+      --border:rgba(255,255,255,.10);
+      --shadow:rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--text);
+      padding:20px;
+    }
+    .wrap{max-width:1200px;margin:0 auto}
+    .top{
+      display:flex; gap:14px; flex-wrap:wrap; align-items:stretch;
+      margin-bottom:14px;
+    }
+    .card{
+      background:linear-gradient(180deg,var(--card),var(--card2));
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 16px 40px var(--shadow);
+      padding:16px;
+    }
+    .card h1{margin:0 0 8px;font-size:18px}
+    .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:12px;
+    }
+    .btn{
+      appearance:none; border:0; cursor:pointer;
+      background:linear-gradient(180deg,var(--acc),var(--acc2));
+      color:white; font-weight:700;
+      padding:10px 14px; border-radius:12px;
+      box-shadow:0 10px 18px rgba(79,140,255,.25);
+      transition:.15s transform ease, .15s opacity ease;
+      font-size:13px;
+    }
+    .btn:disabled{opacity:.45; cursor:not-allowed}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{
+      background:transparent;
+      border:1px solid var(--border);
+      box-shadow:none;
+      color:var(--text);
+      font-weight:600;
+    }
+    .file{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:10px 12px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .file input[type="file"]{color:var(--muted)}
+    label{
+      font-size:12px;color:var(--muted);
+      display:block;margin-bottom:6px;
+    }
+    input[type="number"], input[type="text"]{
+      width:120px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:12px;
+      outline:none;
+      font-size:13px;
+    }
+    .grid{display:grid; gap:14px; grid-template-columns:1.1fr .9fr}
+    @media(max-width:980px){ .grid{grid-template-columns:1fr} }
+    .kpi{
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px; margin-top:10px;
+    }
+    .kpi .box{
+      padding:12px;border:1px solid var(--border);
+      border-radius:14px;background:rgba(255,255,255,.03);
+    }
+    .kpi .v{font-size:18px;font-weight:800}
+    .kpi .t{font-size:12px;color:var(--muted);margin-top:2px}
+    .status{margin-top:10px;font-size:12px;color:var(--muted)}
+    .pill{
+      display:inline-block; padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      margin-left:8px; font-size:11px;
+    }
+    .pill.ok{border-color:rgba(49,208,127,.35); color:var(--ok)}
+    .pill.bad{border-color:rgba(255,93,93,.35); color:var(--bad)}
+    table{
+      width:100%; border-collapse:separate; border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:rgba(255,255,255,.02);
+    }
+    thead th{
+      text-align:left; font-size:12px; color:var(--muted);
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      position:sticky; top:0;
+    }
+    tbody td{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+      font-size:13px;
+    }
+    tbody tr:last-child td{border-bottom:0}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px}
+    .small{font-size:12px;color:var(--muted)}
+    .warn{color:var(--warn)}
+    .bad{color:var(--bad)}
+    .ok{color:var(--ok)}
+    .footer-note{margin-top:10px;color:var(--muted);font-size:12px}
+  </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="container">
-    <h1>WB Kurallı Düzenleyici</h1>
-    <p>Kurallar: Silmek yok, Gramer düzeltme var, Sıralama var (Kategori + Özellik + Hedef Kitle)</p>
+  <div class="top">
+    <div class="card" style="flex:1 1 520px;">
+      <h1>Wildberries Başlık Optimizasyonu</h1>
+      <p>
+        Excel yükle → <span class="mono">uzun isim</span> sütununu işle → 60 karakter sınırına göre Rusça başlıkları temizle/kısalt → yeni Excel indir.
+      </p>
 
-    <div class="box" id="uploadBox">
-        <h3>Excel Dosyasını Buraya Sürükle</h3>
+      <div class="controls">
+        <div class="file">
+          <input id="file" type="file" accept=".xlsx,.xls" />
+          <span id="fileName" class="small">Dosya seçilmedi</span>
+        </div>
+
+        <div>
+          <label>Maks. karakter</label>
+          <input id="maxLen" type="number" min="20" max="120" value="60" />
+        </div>
+
+        <div>
+          <label>Sütun adı</label>
+          <input id="colName" type="text" value="uzun isim" />
+        </div>
+
+        <button id="runBtn" class="btn" disabled>İşle</button>
+        <button id="downloadBtn" class="btn secondary" disabled>Excel İndir</button>
+      </div>
+
+      <div id="status" class="status">Hazır.</div>
+
+      <div class="kpi">
+        <div class="box">
+          <div class="v" id="k_total">-</div>
+          <div class="t">Toplam başlık</div>
+        </div>
+        <div class="box">
+          <div class="v" id="k_ok">-</div>
+          <div class="t">Sınır altında</div>
+        </div>
+        <div class="box">
+          <div class="v" id="k_avg">-</div>
+          <div class="t">Ortalama uzunluk</div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Üretilen sütunlar: <span class="mono">optimized_title</span>, <span class="mono">karakter_sayisi</span>, <span class="mono">uzunluk_ok</span>
+      </div>
     </div>
-    
-    <div id="status"></div>
-    <button id="downloadBtn" class="btn" style="display:none;">Düzenlenmiş Dosyayı İndir</button>
-    <table id="preview"></table>
+
+    <div class="card" style="flex:1 1 320px;">
+      <h1>Kural Özeti</h1>
+      <p>
+        • Zorunlu hedef kitle: для женщин/мужчин/мальчиков/девочек/малышей<br/>
+        • Ürün tipi öne alınır (bulunursa)<br/>
+        • Kısaltmalar & gereksiz kelime temizliği (Python’daki sözlük)<br/>
+        • Yasak noktalama: <span class="mono">: , ;</span> kaldırılır<br/>
+        • Uzunsa: özellikler önceliğe göre kırpılır, sonra kelime bazlı kesilir
+      </p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h1>Önizleme (İlk 50)</h1>
+      <div class="small" style="margin-bottom:8px;color:var(--muted)">
+        Tablo boşsa: dosyayı seç → İşle.
+      </div>
+      <div style="max-height:520px;overflow:auto;border-radius:16px">
+        <table id="table">
+          <thead>
+            <tr>
+              <th style="width:42px;">#</th>
+              <th>ÖNCE</th>
+              <th>SONRA</th>
+              <th style="width:110px;">Uzunluk</th>
+              <th style="width:120px;">Durum</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Uyarılar</h1>
+      <p class="small">
+        • Excel’de <span class="mono">uzun isim</span> sütunu yoksa, üstten “Sütun adı” alanını değiştir.<br/>
+        • “Hedef kitle” başlıkta yoksa, Python’daki gibi heuristikle tahmin edilir.<br/>
+        • Ürün tipi hiç bulunamazsa: sadece temizlenmiş orijinal başlık döner.
+      </p>
+
+      <div id="problems" class="small" style="margin-top:12px;"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-class WBEditor {
-    constructor() {
-        // 1. Ürün Sözlüğü (Çoğul -> Tekil Kuralları)
-        this.productMap = {
-            // HATA OLANLAR (Düzeltilecekler)
-            'футболки': 'Футболка', 'футболка': 'Футболка',
-            'рубашки': 'Рубашка', 'рубашка': 'Рубашка',
-            'блузки': 'Блузка', 'блузка': 'Блузка',
-            'платья': 'Платье', 'платье': 'Платье',
-            'костюмы': 'Костюм', 'костюм': 'Костюм',
-            'свитера': 'Свитер', 'свитер': 'Свитер',
-            'толстовки': 'Толстовка', 'толстовка': 'Толстовка',
-            'свитшоты': 'Свитшот', 'свитшот': 'Свитшот',
-            'майки': 'Майка', 'майка': 'Майка',
-            'пижамы': 'Пижама', 'пижама': 'Пижама',
-            'куртки': 'Куртка', 'куртка': 'Куртка',
-            'жилеты': 'Жилет', 'жилет': 'Жилет',
-            'комбинезоны': 'Комбинезон', 'комбинезон': 'Комбинезон',
-            'кардиганы': 'Кардиган', 'кардиган': 'Кардиган',
-            'туники': 'Туника', 'туника': 'Туника',
-            'боди': 'Боди', 'пальто': 'Пальто',
-            // DOĞAL ÇOĞULLAR (Dokunulmayacaklar)
-            'брюки': 'Брюки', 'шорты': 'Шорты', 'джинсы': 'Джинсы', 
-            'леггинсы': 'Леггинсы', 'лосины': 'Лосины', 'трусы': 'Трусы',
-            'джоггеры': 'Джоггеры', 'бриджи': 'Бриджи'
-        };
+/* =======================
+   WBTitleOptimizer (JS)
+   ======================= */
 
-        // 2. Hedef Kitle Regexleri
-        this.targets = [
-            { r: /женщин[аы]/i, v: 'для женщин' },
-            { r: /мужчин[аы]/i, v: 'для мужчин' },
-            { r: /девоч[а-я]*|для девочек/i, v: 'для девочек' },
-            { r: /мальчи[а-я]*|для мальчиков/i, v: 'для мальчиков' },
-            { r: /детск[а-я]*|для детей/i, v: 'для детей' },
-            { r: /малыш[а-я]*|для малышей/i, v: 'для малышей' },
-            { r: /беременн[а-я]*/i, v: 'для беременных' }
-        ];
-    }
+class WBTitleOptimizer {
+  constructor(maxLength = 60) {
+    this.max_length = maxLength;
 
-    duzenle(baslik) {
-        if (!baslik) return "";
-        let ham = String(baslik)
-            .replace(/[:;,]/g, " ") // Kural 3: İki nokta ve virgül yasak
-            .replace(/\s+/g, " ")   // Fazla boşlukları sil
-            .trim();
+    this.TARGET_AUDIENCES = [
+      'для женщин',
+      'для мужчин',
+      'для мальчиков',
+      'для девочек',
+      'для малышей'
+    ];
 
-        let kelimeler = ham.split(" ");
-        let urunAdi = "";
-        let hedefKitle = "";
-        let ozellikler = [];
-
-        // KELİME ANALİZİ
-        kelimeler.forEach(kelime => {
-            let kucuk = kelime.toLowerCase();
-            let temizKucuk = kucuk.replace(/[.,]/g, ""); // Noktalama temizle
-
-            // A. Hedef Kitle mi?
-            let kitleBulundu = false;
-            for (let t of this.targets) {
-                if (t.r.test(kucuk)) {
-                    hedefKitle = t.v; // Standart formatı al (Kural 5: Net belirtilmeli)
-                    kitleBulundu = true;
-                    break;
-                }
-            }
-            if (kitleBulundu) return;
-
-            // B. Ürün Adı mı? (Kural 13: Tekil/Çoğul Düzeltmesi)
-            // Kelimenin köküne bak (basitçe) veya tam eşleşme ara
-            let sozlukKarsiligi = this.productMap[temizKucuk];
-            
-            // Eğer sözlükte varsa ve henüz ürün adı bulmadıysak
-            if (sozlukKarsiligi) {
-                if (!urunAdi) {
-                    urunAdi = sozlukKarsiligi; // Doğru gramerli halini al
-                    return;
-                }
-            }
-
-            // C. Hiçbiri değilse Özelliktir (Sıfat, Detay)
-            // Sadece anlamsız tek harfleri veya sayıları alırken dikkat et
-            if (kucuk.length > 1 || /\d/.test(kucuk)) {
-                // Kural 8: Yarım kalan ifadeleri düzelt (Bağlaç kontrolü sonra yapılacak)
-                ozellikler.push(kelime); // Orijinal halini sakla (Büyük/küçük harf bozulmasın diye)
-            }
-        });
-
-        // İNŞA ETME (Kural 4: Kategori / Ürün Başlığı olacak)
-        // Sıralama: [ÜRÜN] [ÖZELLİKLER] [HEDEF KİTLE]
-        
-        let yeniBaslikParcalari = [];
-
-        // 1. Ürün Adı (En Başa)
-        if (urunAdi) {
-            yeniBaslikParcalari.push(urunAdi);
-        } else if (ozellikler.length > 0) {
-            // Ürün adı bulamadıysak özelliklerin ilkini baş yap
-            let ilk = ozellikler.shift();
-            yeniBaslikParcalari.push(ilk.charAt(0).toUpperCase() + ilk.slice(1));
-        }
-
-        // 2. Özellikler
-        // Bağlaç temizliği: Eğer özellik listesinde 'с' (ile) var ama arkasından kelime gelmiyorsa sil
-        let temizOzellikler = [];
-        for (let i = 0; i < ozellikler.length; i++) {
-            let kelime = ozellikler[i];
-            // Sarkan bağlaçları temizle (Kural 8: Anlam bütünlüğü)
-            if (['с', 'и', 'из'].includes(kelime.toLowerCase()) && i === ozellikler.length - 1) {
-                continue; 
-            }
-            temizOzellikler.push(kelime.toLowerCase()); // Özellikler küçük harf
-        }
-        yeniBaslikParcalari.push(...temizOzellikler);
-
-        // 3. Hedef Kitle (En Sona)
-        if (hedefKitle) {
-            yeniBaslikParcalari.push(hedefKitle);
-        }
-
-        let sonuc = yeniBaslikParcalari.join(" ");
-
-        // SON RÖTUŞLAR
-        // Kural 12: Büyük-küçük harf düzgün olacak (Cümle başı büyük)
-        sonuc = sonuc.charAt(0).toUpperCase() + sonuc.slice(1);
-
-        // Kural 7: Maksimum 60 Karakter
-        if (sonuc.length > 60) {
-            // Kelimeyi ortadan bölmemek için son boşluktan kes
-            let kesik = sonuc.substring(0, 60);
-            let sonBosluk = kesik.lastIndexOf(" ");
-            if (sonBosluk > 0) {
-                sonuc = kesik.substring(0, sonBosluk);
-            } else {
-                sonuc = kesik;
-            }
-        }
-
-        return sonuc.trim();
-    }
-}
-
-// --- Dosya İşleme Kodları ---
-const editor = new WBEditor();
-const uploadBox = document.getElementById('uploadBox');
-const fileInput = document.createElement('input');
-fileInput.type = 'file'; fileInput.accept = '.xlsx, .xls';
-
-uploadBox.onclick = () => fileInput.click();
-uploadBox.ondragover = (e) => { e.preventDefault(); uploadBox.style.borderColor = '#3498db'; };
-uploadBox.ondragleave = () => { uploadBox.style.borderColor = '#bdc3c7'; };
-uploadBox.ondrop = (e) => { e.preventDefault(); if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); };
-fileInput.onchange = (e) => { if(e.target.files[0]) processFile(e.target.files[0]); };
-
-let processedWorkbook = null;
-
-function processFile(file) {
-    document.getElementById('status').innerText = "İşleniyor...";
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, {type: 'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, {header: 1});
-
-        const headers = json[0];
-        // İsim sütununu bul
-        let colIdx = headers.findIndex(h => h && /name|isim|название/i.test(h));
-        if (colIdx === -1) colIdx = 0;
-
-        const outputData = [ [...headers, "WB_Final_Baslik"] ];
-
-        // İlk 20 satırı önizleme için tut
-        let previewHtml = "<thead><tr><th>Orjinal</th><th>Düzenlenmiş</th></tr></thead><tbody>";
-
-        for (let i = 1; i < json.length; i++) {
-            let row = json[i];
-            let orjinal = row[colIdx];
-            let yeni = editor.duzenle(orjinal);
-            
-            let newRow = [...row];
-            newRow.push(yeni);
-            outputData.push(newRow);
-
-            if (i < 11) {
-                previewHtml += `<tr><td>${orjinal || ''}</td><td style="font-weight:bold; color:#27ae60;">${yeni}</td></tr>`;
-            }
-        }
-        previewHtml += "</tbody>";
-        document.getElementById('preview').innerHTML = previewHtml;
-
-        // İndirme Hazırla
-        const newWs = XLSX.utils.aoa_to_sheet(outputData);
-        processedWorkbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(processedWorkbook, newWs, "Sonuclar");
-        
-        document.getElementById('downloadBtn').style.display = "block";
-        document.getElementById('status').innerText = "✅ Tamamlandı";
+    this.ABBREVIATIONS = {
+      'комплект из 3-х штук': 'комплект 3 шт',
+      'комплект из 2-х штук': 'комплект 2 шт',
+      'комплект из 3 штук': 'комплект 3 шт',
+      'комплект из 2 штук': 'комплект 2 шт',
+      '3-х штук': '3 шт',
+      '2-х штук': '2 шт',
+      '3 штук': '3 шт',
+      '2 штук': '2 шт',
+      'с эластичностью': '',
+      'базовые': '',
+      'с отложным воротником': 'с воротником',
+      'с эластичным поясом': 'с резинкой',
+      'с эластичной талией': 'с резинкой',
+      'стандартного кроя': '',
+      'свободного кроя': '',
+      'с коротким рукавом': '',
+      'и коротким рукавом': '',
+      'без наполнителя': '',
+      'с косточками': '',
+      'пижамный комплект': 'пижама',
+      'спортивные джоггеры': 'джоггеры',
+      'спортивные': '',
+      'с завязками': '',
+      'с кисточками': '',
+      'из хлопка': 'хлопок',
+      'из кашкорсе': 'кашкорсе',
+      'из эластичного хлопка': 'хлопок',
+      'из джерси': 'джерси',
+      'добби': '',
+      'женская': '',
+      'мужская': '',
+      'мужских': '',
+      'женских': '',
+      'и принтом': 'с принтом',
+      'и узором': 'с узором',
+      'и цветочным': 'цветочный',
+      'цветочным принтом': 'цветочный принт',
+      'цветочным узором': 'цветочный узор',
+      'с v-образным вырезом': 'с v-вырезом',
+      'v-образным вырезом': 'v-вырез',
+      'с воротником-стойка': 'со стойкой',
+      'воротником-стойка': 'стойка',
+      'воротник-стойка': 'стойка',
+      'воротник-труба': 'труба',
+      'с юбкой и принтом': 'с юбкой с принтом',
+      'коротким рукавом': '',
+      'и утеплением': 'утепленные',
+      'с утеплением': 'утепленные',
+      'утеплением': 'утепленные',
+      'спортивный': '',
+      'беспроводной': ''
     };
-    reader.readAsArrayBuffer(file);
+
+    this.PRODUCT_TYPES = [
+      'комбинезон', 'трусы', 'боксеры', 'блузка', 'джоггеры',
+      'футболка', 'бюстгальтер', 'пижама', 'топ', 'майка',
+      'рубашка', 'платье', 'юбка', 'брюки', 'шорты', 'куртка',
+      'свитер', 'кардиган', 'худи', 'толстовка', 'леггинсы',
+      'колготки', 'носки', 'трусы боксеры', 'комплект', 'купальник'
+    ];
+  }
+
+  detect_target_audience(title) {
+    const titleLower = (title || '').toLowerCase();
+
+    for (const audience of this.TARGET_AUDIENCES) {
+      if (titleLower.includes(audience)) {
+        const pattern = new RegExp(this.escapeRegExp(audience), 'ig');
+        const without = title.replace(pattern, '').trim();
+        return [audience, without];
+      }
+    }
+
+    // Tahmin (Python ile aynı yaklaşım)
+    if (titleLower.includes('женск') || titleLower.includes('блузка') || titleLower.includes('бюстгальтер')) {
+      return ['для женщин', title];
+    } else if (titleLower.includes('мужск') || titleLower.includes('боксеры')) {
+      return ['для мужчин', title];
+    } else if (titleLower.includes('мальчик')) {
+      return ['для мальчиков', title];
+    } else if (titleLower.includes('девочк')) {
+      return ['для девочек', title];
+    }
+    return ['для женщин', title];
+  }
+
+  detect_product_type(title) {
+    const titleLower = (title || '').toLowerCase();
+    const sortedProducts = [...this.PRODUCT_TYPES].sort((a,b)=>b.length-a.length);
+
+    const found = [];
+    for (const product of sortedProducts) {
+      if (titleLower.includes(product)) found.push(product);
+    }
+    if (found.length) {
+      const productType = found[0];
+      const pattern = new RegExp(this.escapeRegExp(productType), 'ig');
+      const match = pattern.exec(title);
+      if (match) {
+        const originalCase = match[0];
+        // sadece ilk geçeni sil (Python count=1)
+        const without = title.replace(new RegExp(this.escapeRegExp(productType), 'i'), '').trim();
+        return [originalCase, without];
+      }
+    }
+    return ['', title];
+  }
+
+  apply_abbreviations(text) {
+    let result = text || '';
+
+    const entries = Object.entries(this.ABBREVIATIONS)
+      .sort((a,b)=>b[0].length-a[0].length);
+
+    for (const [longForm, shortForm] of entries) {
+      const pattern = new RegExp(this.escapeRegExp(longForm), 'ig');
+      if (pattern.test(result)) {
+        result = result.replace(pattern, shortForm ? shortForm : '');
+      }
+    }
+    return result;
+  }
+
+  clean_text(text) {
+    let t = (text || '');
+
+    t = t.replace(/\s+/g, ' ');
+    t = t.replace(/[,:;]/g, '');
+    t = t.replace(/\.\.\.\s*\d+\s*\.\.\./g, '');
+    t = t.replace(/\bи\s*\.\.\./gi, '');
+    t = t.replace(/для\s*$/gi, '');
+    t = t.replace(/из\s*$/gi, '');
+    t = t.replace(/с\s*$/gi, '');
+    t = t.replace(/\bи\s*$/gi, '');
+    t = t.replace(/-\s*$/g, '');
+    t = t.replace(/\s+-\s*$/g, '');
+    t = t.trim();
+    t = t.replace(/\.+$/g, ''); // sonda nokta(lar)
+    t = t.replace(/[()]/g, '');
+    t = t.replace(/\s+[Ии]\s*$/g, '');
+    t = t.replace(/\s+[Ии]\s+/g, ' ');
+    t = t.replace(/\s+/g, ' ').trim();
+
+    return t;
+  }
+
+  capitalize_properly(text) {
+    if (!text) return text;
+    const words = text.split(/\s+/).filter(Boolean);
+    if (!words.length) return text;
+
+    const out = [];
+    for (let i=0;i<words.length;i++) {
+      const word = words[i];
+      if (i===0) {
+        if (word.length>1) out.push(word[0].toUpperCase()+word.slice(1).toLowerCase());
+        else out.push(word.toUpperCase());
+      } else {
+        if (word && /[A-ZА-ЯЁ]/.test(word[0]) && word.length>=3 && !(/[A-ZА-ЯЁ]/.test(word[1] || ''))) {
+          out.push(word[0].toUpperCase()+word.slice(1).toLowerCase());
+        } else if (word.includes('-') || word.length<=2) {
+          out.push(word.toLowerCase());
+        } else {
+          out.push(word.toLowerCase());
+        }
+      }
+    }
+    return out.join(' ');
+  }
+
+  remove_redundant_features(features, priorityOrder) {
+    let f = features || '';
+    const fLower = f.toLowerCase();
+    const kept = [];
+
+    let working = f;
+
+    for (const feature of priorityOrder) {
+      if (fLower.includes(feature)) {
+        const pattern = new RegExp(this.escapeRegExp(feature), 'ig');
+        const m = pattern.exec(working);
+        if (m) {
+          kept.push(m[0]);
+          // sadece ilkini sil
+          working = working.replace(new RegExp(this.escapeRegExp(feature), 'i'), '').trim();
+        }
+      }
+    }
+
+    const remaining = this.clean_text(working);
+    const keptJoined = kept.join(' ').toLowerCase();
+    if (remaining && !keptJoined.includes(remaining.toLowerCase())) {
+      kept.push(remaining);
+    }
+    return kept.join(' ').trim();
+  }
+
+  optimize_title(title) {
+    if (title === null || title === undefined) return '';
+    const original = String(title).trim();
+    if (!original) return '';
+
+    // 1) audience
+    const [audience, withoutAudience] = this.detect_target_audience(original);
+
+    // 2) product
+    const [productTypeRaw, remaining0] = this.detect_product_type(withoutAudience);
+
+    // 3) abbreviations
+    let remaining = this.apply_abbreviations(remaining0);
+
+    // 4) clean
+    remaining = this.clean_text(remaining);
+    let productType = this.clean_text(productTypeRaw);
+
+    // 5) redundant words
+    remaining = remaining.replace(/\b[Жж]енская\b/gi,'');
+    remaining = remaining.replace(/\b[Мм]ужская\b/gi,'');
+    remaining = remaining.replace(/\b[Мм]ужских\b/gi,'');
+    remaining = this.clean_text(remaining);
+
+    // 6) assemble
+    let optimized = '';
+    if (!productType) {
+      optimized = this.clean_text(original);
+    } else {
+      optimized = `${productType} ${audience}`.trim();
+      if (remaining) optimized += ` ${remaining}`;
+    }
+
+    // 7) capitalization
+    optimized = this.capitalize_properly(optimized);
+
+    // 8) clean again
+    optimized = this.clean_text(optimized);
+
+    // 9) length control
+    if (optimized.length > this.max_length) {
+      const featurePriority = [
+        'комплект','набор','шт','упаковки',
+        'хлопок','кашкорсе','джерси',
+        'с воротником','с резинкой','утепление',
+        'однотонный','однотонная','в клетку'
+      ];
+
+      const base = this.clean_text(`${productType} ${audience}`.trim());
+      const available = this.max_length - base.length - 1;
+
+      if (available > 0 && remaining) {
+        let shortFeatures = this.remove_redundant_features(remaining, featurePriority);
+
+        const words = shortFeatures.split(/\s+/).filter(Boolean);
+        const kept = [];
+        let currentLen = base.length;
+
+        for (const w of words) {
+          if (currentLen + w.length + 1 <= this.max_length) {
+            kept.push(w);
+            currentLen += w.length + 1;
+          } else break;
+        }
+
+        if (kept.length) {
+          optimized = this.clean_text(`${base} ${kept.join(' ')}`);
+        } else {
+          optimized = base;
+        }
+      } else {
+        optimized = base;
+      }
+    }
+
+    // 10) still long -> cut without half-word
+    if (optimized.length > this.max_length) {
+      const cut = optimized.slice(0, this.max_length);
+      const parts = cut.split(/\s+/).filter(Boolean);
+      if (parts.length > 1) optimized = parts.slice(0, -1).join(' ');
+      else optimized = cut.trim();
+    }
+
+    // 11) final clean
+    optimized = this.clean_text(optimized);
+    return optimized;
+  }
+
+  escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 }
 
-document.getElementById('downloadBtn').onclick = () => {
-    XLSX.writeFile(processedWorkbook, "WB_Kuralli_Duzenlenmis.xlsx");
-};
-</script>
+/* =======================
+   UI + Excel I/O
+   ======================= */
 
+const els = {
+  file: document.getElementById('file'),
+  fileName: document.getElementById('fileName'),
+  runBtn: document.getElementById('runBtn'),
+  downloadBtn: document.getElementById('downloadBtn'),
+  status: document.getElementById('status'),
+  maxLen: document.getElementById('maxLen'),
+  colName: document.getElementById('colName'),
+  tbody: document.getElementById('tbody'),
+  problems: document.getElementById('problems'),
+  k_total: document.getElementById('k_total'),
+  k_ok: document.getElementById('k_ok'),
+  k_avg: document.getElementById('k_avg'),
+};
+
+let workbook = null;
+let sheetName = null;
+let rows = null;        // array of objects
+let outputRows = null;  // processed array of objects
+
+function setStatus(msg, type=null) {
+  let extra = '';
+  if (type==='ok') extra = '<span class="pill ok">OK</span>';
+  if (type==='bad') extra = '<span class="pill bad">HATA</span>';
+  els.status.innerHTML = `${msg} ${extra}`;
+}
+
+function resetKPIs() {
+  els.k_total.textContent = '-';
+  els.k_ok.textContent = '-';
+  els.k_avg.textContent = '-';
+}
+
+function renderTable(list) {
+  els.tbody.innerHTML = '';
+  const preview = list.slice(0, 50);
+
+  preview.forEach((r, i) => {
+    const tr = document.createElement('tr');
+
+    const ok = !!r.uzunluk_ok;
+    const badge = ok ? `<span class="pill ok">OK</span>` : `<span class="pill bad">> limit</span>`;
+
+    tr.innerHTML = `
+      <td class="small">${i+1}</td>
+      <td>${escapeHTML(String(r.__before || ''))}</td>
+      <td>${escapeHTML(String(r.optimized_title || ''))}</td>
+      <td class="mono">${r.karakter_sayisi ?? ''}</td>
+      <td>${badge}</td>
+    `;
+    els.tbody.appendChild(tr);
+  });
+}
+
+function escapeHTML(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[c]));
+}
+
+function showProblems(list, maxLen) {
+  const bad = list.filter(r => !r.uzunluk_ok);
+  if (!bad.length) {
+    els.problems.innerHTML = `<div class="ok">Sorunlu başlık yok. Hepsi ≤ ${maxLen}.</div>`;
+    return;
+  }
+
+  const head = bad.slice(0, 8).map(r => {
+    return `<div class="mono"><span class="bad">[${r.karakter_sayisi}]</span> ${escapeHTML(r.optimized_title)}</div>`;
+  }).join('');
+
+  els.problems.innerHTML = `
+    <div class="warn">${bad.length} başlık hâlâ ${maxLen} karakteri aşıyor.</div>
+    <div style="margin-top:8px">${head}</div>
+    ${bad.length>8 ? `<div class="small" style="margin-top:6px;color:var(--muted)">+ ${bad.length-8} tane daha… (Excel’de görebilirsin)</div>` : ''}
+  `;
+}
+
+els.file.addEventListener('change', async (e) => {
+  resetKPIs();
+  els.downloadBtn.disabled = true;
+  els.runBtn.disabled = true;
+  els.tbody.innerHTML = '';
+  els.problems.innerHTML = '';
+
+  const f = e.target.files && e.target.files[0];
+  if (!f) {
+    els.fileName.textContent = 'Dosya seçilmedi';
+    setStatus('Hazır.');
+    return;
+  }
+
+  els.fileName.textContent = f.name;
+  setStatus('Dosya okunuyor…');
+
+  try {
+    const data = await f.arrayBuffer();
+    workbook = XLSX.read(data, { type: 'array' });
+    sheetName = workbook.SheetNames[0];
+    const ws = workbook.Sheets[sheetName];
+
+    rows = XLSX.utils.sheet_to_json(ws, { defval: '' }); // objects
+    setStatus(`Dosya okundu. Sayfa: ${sheetName}. Satır: ${rows.length}`, 'ok');
+    els.runBtn.disabled = rows.length === 0;
+  } catch (err) {
+    console.error(err);
+    setStatus('Dosya okunamadı. Excel formatını kontrol et.', 'bad');
+  }
+});
+
+els.runBtn.addEventListener('click', () => {
+  if (!rows || !rows.length) return;
+
+  const maxLen = Number(els.maxLen.value || 60);
+  const col = String(els.colName.value || 'uzun isim').trim();
+
+  const optimizer = new WBTitleOptimizer(maxLen);
+
+  // Sütun kontrol (ilk satırdan da bak)
+  const hasCol = rows.some(r => Object.prototype.hasOwnProperty.call(r, col));
+  if (!hasCol) {
+    setStatus(`"${col}" sütunu bulunamadı. Sütun adını düzelt.`, 'bad');
+    return;
+  }
+
+  setStatus('Başlıklar optimize ediliyor…');
+
+  outputRows = rows.map(r => {
+    const before = r[col];
+    const opt = optimizer.optimize_title(before);
+    const len = opt.length;
+    const ok = len <= maxLen;
+
+    // aynı satıra yeni kolon ekleyerek ilerle
+    return {
+      ...r,
+      optimized_title: opt,
+      karakter_sayisi: len,
+      uzunluk_ok: ok,
+      __before: before
+    };
+  });
+
+  // KPI
+  const total = outputRows.length;
+  const okCount = outputRows.reduce((acc, r) => acc + (r.uzunluk_ok ? 1 : 0), 0);
+  const avg = total ? (outputRows.reduce((acc, r) => acc + (r.karakter_sayisi || 0), 0) / total) : 0;
+
+  els.k_total.textContent = String(total);
+  els.k_ok.textContent = `${okCount} / ${total}`;
+  els.k_avg.textContent = avg.toFixed(1);
+
+  renderTable(outputRows);
+  showProblems(outputRows, maxLen);
+
+  els.downloadBtn.disabled = false;
+  setStatus('Optimizasyon tamamlandı.', 'ok');
+});
+
+els.downloadBtn.addEventListener('click', () => {
+  if (!outputRows || !outputRows.length) return;
+
+  // __before alanını indirdiğin dosyada istemiyorsan çıkar
+  const clean = outputRows.map(({__before, ...rest}) => rest);
+
+  const ws = XLSX.utils.json_to_sheet(clean);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'optimized');
+
+  const fname = `optimized_titles_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fname);
+});
+
+</script>
 </body>
 </html>
